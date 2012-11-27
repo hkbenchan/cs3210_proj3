@@ -12,6 +12,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#define FUSE_USE_VERSION 26
+
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
 
