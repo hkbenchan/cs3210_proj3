@@ -11,3 +11,5 @@ Author: Ho Pan Chan, Robert Harrison
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <time.h>

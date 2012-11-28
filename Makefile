@@ -1,15 +1,12 @@
-CFLAGS := -Wall $(shell pkg-config fuse libexif json --cflags) $(shell curl-config --cflags) $(shell Magick-config --cflags)
-LDFLAGS := $(shell pkg-config fuse libexif json --libs) $(shell curl-config --libs) $(shell Magick-config --libs) $(shell MagickWand-config --libs)
-
-targets = ypfs #fuseexmp fusexmp_fh hello hello_ll null
+targets = ypfs hello
 
 all: $(targets)
 
 hello: hello.c
-	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS)
+	gcc -Wall `pkg-config fuse --cflags --libs` hello.c -o hello
 
 ypfs: ypfs.c
-	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS)
+	gcc -Wall `pkg-config fuse --cflags --libs` ypfs.c -o ypfs
 
 clean:
 	rm -f *.o
