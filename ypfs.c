@@ -89,6 +89,11 @@ static int ypfs_write(const char* path, char *buf, size_t size, off_t offset, st
 	return 0;
 }
 
+static int ypfs_mkdir(const char* path, mode_t mode){
+	//todo:implemnt
+	return 0;
+}
+
 static struct fuse_operations ypfs_oper = {
     //.init        = ypfs_init,
     //.destroy     = ypfs_destroy,
@@ -98,7 +103,7 @@ static struct fuse_operations ypfs_oper = {
     //.readlink    = ypfs_readlink,
     .readdir     = ypfs_readdir,
     //.mknod       = ypfs_mknod,
-    //.mkdir       = ypfs_mkdir,
+    .mkdir       = ypfs_mkdir,
     //.symlink     = ypfs_symlink,
     //.unlink      = ypfs_unlink,
     //.rmdir       = ypfs_rmdir,
