@@ -14,8 +14,9 @@ Author: Ho Pan Chan, Robert Harrison
 #include <stdlib.h>
 #include <time.h>
 
-static const char *ypfs_str = "Welecom to your pic filesystem!\n";
+static const char *ypfs_str = "Welecome to your pic filesystem!\n";
 static const char *ypfs_path = "/ypfs";
+static char username[30];
 
 static int ypfs_getattr(const char *path, struct stat *stbuf)
 {
@@ -29,7 +30,7 @@ static int ypfs_getattr(const char *path, struct stat *stbuf)
     else if(strcmp(path, ypfs_path) == 0) {
         stbuf->st_mode = S_IFREG | 0444;
         stbuf->st_nlink = 1;
-        stbuf->st_size = strlen(ypfs_str);
+        stbuf->st_size = strlen(ypfs_str)+strlen(username)+1;
     }
     else
         res = -ENOENT;
@@ -67,17 +68,21 @@ static int ypfs_open(const char *path, struct fuse_file_info *fi)
 static int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
                       struct fuse_file_info *fi)
 {
+	char tmp[100];
     size_t len;
     (void) fi;
     if(strcmp(path, ypfs_path) != 0)
         return -ENOENT;
 
-    len = strlen(ypfs_str);
+	strcpy(tmp, ypfs_str);
+	strcat(tmp, username);
+	strcat(tmp, "\n");
+    len = strlen(tmp);
     
     if (offset < len) {
         if (offset + size > len)
             size = len - offset;
-        memcpy(buf, ypfs_str + offset, size);
+        memcpy(buf, tmp + offset, size);
     } else
         size = 0;
 
@@ -159,5 +164,7 @@ static struct fuse_operations ypfs_oper = {
 int main(int argc, char *argv[])
 {
     umask(0);
+	printf("Username: ");
+	scanf("%s", &username);
     return fuse_main(argc, argv, &ypfs_oper, NULL);
 }
