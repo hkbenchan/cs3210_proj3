@@ -110,6 +110,17 @@ static int ypfs_chmod(const char *path, mode_t mode)
 	return 0;
 }
 
+static int ypfs_chown(const char *path, uid_t uid, gid_t gid)
+{
+	int res;
+
+	res = lchown(path, uid, gid);
+	if (res == -1)
+		return -errno;
+
+	return 0;
+}
+
 static struct fuse_operations ypfs_oper = {
     //.init        = ypfs_init,
     //.destroy     = ypfs_destroy,
@@ -126,7 +137,7 @@ static struct fuse_operations ypfs_oper = {
     //.rename      = ypfs_rename,
     //.link        = ypfs_link,
     .chmod       = ypfs_chmod,
-    //.chown       = ypfs_chown,
+    .chown       = ypfs_chown,
     //.truncate    = ypfs_truncate,
     //.ftruncate   = ypfs_ftruncate,
     //.utimens     = ypfs_utimens,
