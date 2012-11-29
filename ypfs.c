@@ -90,7 +90,12 @@ static int ypfs_write(const char* path, char *buf, size_t size, off_t offset, st
 }
 
 static int ypfs_mkdir(const char* path, mode_t mode){
-	//todo:implemnt
+	int res;
+
+	res = mkdir(path, mode);
+	if (res == -1)
+		return -errno;
+
 	return 0;
 }
 
