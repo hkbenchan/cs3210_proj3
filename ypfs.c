@@ -14,6 +14,9 @@ Author: Ho Pan Chan, Robert Harrison
 #include <stdlib.h>
 #include <time.h>
 
+static const char *ypfs_str = "Welecom to your pic filesystem!\n";
+static const char *ypfs_path = "/ypfs";
+
 static int ypfs_getattr(const char *path, struct stat *stbuf)
 {
     int res = 0;
