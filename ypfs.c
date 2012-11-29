@@ -99,6 +99,17 @@ static int ypfs_mkdir(const char* path, mode_t mode){
 	return 0;
 }
 
+static int ypfs_chmod(const char *path, mode_t mode)
+{
+	int res;
+
+	res = chmod(path, mode);
+	if (res == -1)
+		return -errno;
+
+	return 0;
+}
+
 static struct fuse_operations ypfs_oper = {
     //.init        = ypfs_init,
     //.destroy     = ypfs_destroy,
@@ -114,7 +125,7 @@ static struct fuse_operations ypfs_oper = {
     //.rmdir       = ypfs_rmdir,
     //.rename      = ypfs_rename,
     //.link        = ypfs_link,
-    //.chmod       = ypfs_chmod,
+    .chmod       = ypfs_chmod,
     //.chown       = ypfs_chown,
     //.truncate    = ypfs_truncate,
     //.ftruncate   = ypfs_ftruncate,
