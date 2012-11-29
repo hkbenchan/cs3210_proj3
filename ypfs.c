@@ -86,13 +86,14 @@ static int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
 
 static int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi){
 	//todo:implement
+	return 0;
 }
 
 static struct fuse_operations ypfs_oper = {
     //.init        = ypfs_init,
     //.destroy     = ypfs_destroy,
-    //.getattr     = ypfs_getattr,
-    .fgetattr    = ypfs_fgetattr,
+    .getattr     = ypfs_getattr,
+    //.fgetattr    = ypfs_fgetattr,
     //.access      = ypfs_access,
     //.readlink    = ypfs_readlink,
     .readdir     = ypfs_readdir,
