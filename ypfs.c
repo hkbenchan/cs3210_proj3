@@ -49,15 +49,6 @@ static struct fuse_operations ypfs_oper = {
     .fsyncdir    = ypfs_fsyncdir,
     .lock        = ypfs_lock,
     .bmap        = ypfs_bmap,
-    .ioctl       = ypfs_ioctl,
-    .poll        = ypfs_poll,
-#ifdef HAVE_SETXATTR
-    .setxattr    = ypfs_setxattr,
-    .getxattr    = ypfs_getxattr,
-    .listxattr   = ypfs_listxattr,
-    .removexattr = ypfs_removexattr,
-#endif
-    .flag_nullpath_ok = 0,                /* See below */
 };
 
 int main(int argc, char *argv[])
