@@ -23,7 +23,7 @@ static int ypfs_getattr(const char *path, struct stat *stbuf)
 
     memset(stbuf, 0, sizeof(struct stat));
     if(strcmp(path, "/") == 0) {
-        stbuf->st_mode = S_IFDIR | 0755;
+        stbuf->st_mode = S_IFDIR | 0777;
         stbuf->st_nlink = 2;
     }
     else if(strcmp(path, ypfs_path) == 0) {
