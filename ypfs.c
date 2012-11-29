@@ -3,16 +3,29 @@ CS 3210 Project 3 - YPFS
 Author: Ho Pan Chan, Robert Harrison
 **/
 
-
 #define FUSE_USE_VERSION 26
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef linux
+/* For pread()/pwrite() */
+#define _XOPEN_SOURCE 500
+#endif
 
 #include <fuse.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
+#include <unistd.h>
 #include <fcntl.h>
-#include <stdlib.h>
-#include <time.h>
+#include <dirent.h>
+#include <errno.h>
+#include <sys/time.h>
+#ifdef HAVE_SETXATTR
+#include <sys/xattr.h>
+#endif
+
 
 static const char *ypfs_str = "Welecome to your pic filesystem!\n";
 static const char *ypfs_path = "/ypfs";
