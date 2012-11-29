@@ -165,6 +165,6 @@ int main(int argc, char *argv[])
 {
     umask(0);
 	printf("Username: ");
-	scanf("%s", &username);
+	scanf("%s", username);
     return fuse_main(argc, argv, &ypfs_oper, NULL);
 }
