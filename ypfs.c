@@ -27,10 +27,19 @@ Author: Ho Pan Chan, Robert Harrison
 #include <sys/xattr.h>
 #endif
 
+#define DEBUG 1
+
 
 static const char *ypfs_str = "Welecome to your pic filesystem!\n";
 static const char *ypfs_path = "/ypfs";
 static char username[30];
+
+static void FSLogFlush()
+{
+	FILE *fh;
+	fh = fopen("/tmp/ypfs/log","w");
+	fclose(fh);
+}
 
 static void FSLog(const char *message)
 {
@@ -74,12 +83,24 @@ static int ypfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	FSLog("readdir");
 	FSLog(path);
 	
-    if(strcmp(path, "/") != 0)
-        return -ENOENT;
+	int match = 0;
+	
+    if(strcmp(path, "/") == 0) {
+		match++;
+		filler(buf, ypfs_path + 1, NULL, 0);
+	} else if (strcmp(path, ypfs_path) == 0) {
+		match++;
+	}
+	
+	if (match == 0) {
+		return -ENOENT;
+	}
+
+	// put directories or files here mean display them
 
     filler(buf, ".", NULL, 0);
     filler(buf, "..", NULL, 0);
-    filler(buf, ypfs_path + 1, NULL, 0);
+    
 
     return 0;
 }
@@ -204,6 +225,9 @@ static struct fuse_operations ypfs_oper = {
 
 int main(int argc, char *argv[])
 {
+	if (DEBUG == 0)
+		FSLogFlush();
+
 	FSLog("---Start---");
     umask(0);
 	printf("Username: ");
