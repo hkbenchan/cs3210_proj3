@@ -108,11 +108,27 @@ static int ypfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int ypfs_open(const char *path, struct fuse_file_info *fi)
 {
-    if(strcmp(path, ypfs_path) != 0)
+	int fd;
+	
+	FSLog("open");
+	FSLog(path);
+	
+	if((fi->flags & 3) != O_RDONLY)
+        return -EACCES;
+
+	if (strcmp(path, "/") == 0) {
+		fd = open(path, fi->flags);
+	}
+
+	else if(strcmp(path, ypfs_path) == 0) {
+		fd = open(path, fi->flags);
+	} else
         return -ENOENT;
 
-    if((fi->flags & 3) != O_RDONLY)
-        return -EACCES;
+	if ( fd == -1 )
+		return -errno;
+
+    fi->fh = fd;
 
     return 0;
 }
@@ -120,34 +136,44 @@ static int ypfs_open(const char *path, struct fuse_file_info *fi)
 static int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
                       struct fuse_file_info *fi)
 {
-	//char tmp[100];
-    //size_t len;
-    //(void) fi;
-	/*
-    if(strcmp(path, ypfs_path) != 0)
-        return -ENOENT;
-
-	strcpy(tmp, ypfs_str);
-	strcat(tmp, username);
-	strcat(tmp, "\n");
-    len = strlen(tmp);
-    
-    if (offset < len) {
-        if (offset + size > len)
-            size = len - offset;
-        memcpy(buf, tmp + offset, size);
-    } else
-        size = 0;
-
-    return size;
-	*/
-	return -ENOENT; // directory cannot be read
+	int ret = 0;
+	
+	ret = pread(fi->fh, buf, size, offset);
+	if (ret == -1)
+		return -errno;
+	
+	return 0;
 }
 
+static int ypfs_release(const char *path, struct fuse_file_info *fi){
+	
+	// this one is called when a file is closed
+	// handle the file here
+	
+	// TO DO:
+	int ret = 0;
+	
+	FSLog("release");
+	FSLog(path);
+	
+	
+	
+	return ret;
+}
+
+
+
 static int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi){
-	//todo:implement
+	
+	int ret = 0;
 	FSLog("write trigger");
 	FSLog(path);
+	
+	ret = pwrite(fi->fh, buf, size, offset);
+	
+	if (ret == -1)
+		return -errno;
+		
 	return 0;
 }
 
@@ -218,7 +244,7 @@ static struct fuse_operations ypfs_oper = {
     .read        = ypfs_read,
     .write       = ypfs_write,
     //.statfs      = ypfs_statfs,
-    //.release     = ypfs_release,
+    .release     = ypfs_release,
     //.opendir     = ypfs_opendir,
     //.releasedir  = ypfs_releasedir,
     //.fsync       = ypfs_fsync,
