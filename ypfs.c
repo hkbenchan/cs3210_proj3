@@ -62,7 +62,7 @@ static int ypfs_getattr(const char *path, struct stat *stbuf)
     if(strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0777;
         stbuf->st_nlink = 2;
-		stbug->st_size = 4096; // I'm directory
+		stbuf->st_size = 4096; // I'm directory
     }
     else if(strcmp(path, ypfs_path) == 0) {
         stbuf->st_mode = S_IFDIR | 0644;
