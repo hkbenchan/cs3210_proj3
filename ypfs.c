@@ -39,12 +39,11 @@ static int ypfs_getattr(const char *path, struct stat *stbuf)
     if(strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0777;
         stbuf->st_nlink = 2;
-		stbuf->st_size = 4096; // directory size
     }
     else if(strcmp(path, ypfs_path) == 0) {
-        stbuf->st_mode = S_IFREG | 0444;
-        stbuf->st_nlink = 1;
-        stbuf->st_size = strlen(ypfs_str)+strlen(username)+1;
+        stbuf->st_mode = S_IFDIR | 0644;
+        stbuf->st_nlink = 2;
+        stbuf->st_size = 4096; //strlen(ypfs_str)+strlen(username)+1;
     }
     else
         res = -ENOENT;
