@@ -57,7 +57,7 @@ static int ypfs_getattr(const char *path, struct stat *stbuf)
     else if(strcmp(path, ypfs_path) == 0) {
         stbuf->st_mode = S_IFDIR | 0644;
         stbuf->st_nlink = 2;
-        stbuf->st_size = 4096; //strlen(ypfs_str)+strlen(username)+1;
+        stbuf->st_size = 4096;
     }
     else
         res = -ENOENT;
@@ -72,7 +72,8 @@ static int ypfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     (void) fi;
 
 	FSLog("readdir");
-
+	FSLog(path);
+	
     if(strcmp(path, "/") != 0)
         return -ENOENT;
 
@@ -97,9 +98,10 @@ static int ypfs_open(const char *path, struct fuse_file_info *fi)
 static int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
                       struct fuse_file_info *fi)
 {
-	char tmp[100];
-    size_t len;
-    (void) fi;
+	//char tmp[100];
+    //size_t len;
+    //(void) fi;
+	/*
     if(strcmp(path, ypfs_path) != 0)
         return -ENOENT;
 
@@ -116,6 +118,8 @@ static int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
         size = 0;
 
     return size;
+	*/
+	return -ENOENT; // directory cannot be read
 }
 
 static int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi){
