@@ -39,6 +39,7 @@ static int ypfs_getattr(const char *path, struct stat *stbuf)
     if(strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0777;
         stbuf->st_nlink = 2;
+		stbuf->st_size = 4096; // directory size
     }
     else if(strcmp(path, ypfs_path) == 0) {
         stbuf->st_mode = S_IFREG | 0444;
@@ -140,9 +141,15 @@ static int ypfs_chown(const char *path, uid_t uid, gid_t gid)
 	return 0;
 }
 
+static void ypfs_destory() {
+	
+	printf("Bye bye %s\n", username);
+	return ;
+}
+
 static struct fuse_operations ypfs_oper = {
     //.init        = ypfs_init,
-    //.destroy     = ypfs_destroy,
+    .destroy     = ypfs_destroy,
     .getattr     = ypfs_getattr,
     //.fgetattr    = ypfs_fgetattr,
     //.access      = ypfs_access,
