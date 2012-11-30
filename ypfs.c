@@ -21,6 +21,7 @@ Author: Ho Pan Chan, Robert Harrison
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
+#include <time.h>
 #include <sys/time.h>
 #ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
@@ -30,6 +31,19 @@ Author: Ho Pan Chan, Robert Harrison
 static const char *ypfs_str = "Welecome to your pic filesystem!\n";
 static const char *ypfs_path = "/ypfs";
 static char username[30];
+
+static void FSLog(const char *message)
+{
+	FILE *fh;
+	struct timeval t;
+	gettimeofday(&t, NULL);
+	
+	fh = fopen("/tmp/ypfs/log","a");
+	fprintf(fh, "%ld.%ld : %s\n", time.tv_sec, time.tv_usec, message);
+	fclose(fh);
+	
+}
+
 
 static int ypfs_getattr(const char *path, struct stat *stbuf)
 {
@@ -56,6 +70,8 @@ static int ypfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 {
     (void) offset;
     (void) fi;
+
+	FSLog("readdir");
 
     if(strcmp(path, "/") != 0)
         return -ENOENT;
@@ -104,7 +120,7 @@ static int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
 
 static int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi){
 	//todo:implement
-	printf("ypfs: write trigger");
+	FSLog("write trigger");
 	return 0;
 }
 
@@ -142,7 +158,8 @@ static int ypfs_chown(const char *path, uid_t uid, gid_t gid)
 
 static void ypfs_destroy() {
 	
-	printf("Bye bye %s\n", username);
+	//printf("Bye bye %s\n", username);
+	FSLog("---End---");
 	return ;
 }
 
@@ -183,6 +200,7 @@ static struct fuse_operations ypfs_oper = {
 
 int main(int argc, char *argv[])
 {
+	FSLog("---Start---");
     umask(0);
 	printf("Username: ");
 	scanf("%s", username);
