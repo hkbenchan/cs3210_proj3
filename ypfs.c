@@ -141,7 +141,7 @@ static int ypfs_chown(const char *path, uid_t uid, gid_t gid)
 	return 0;
 }
 
-static void ypfs_destory() {
+static void ypfs_destroy() {
 	
 	printf("Bye bye %s\n", username);
 	return ;
