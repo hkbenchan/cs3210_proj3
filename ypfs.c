@@ -39,7 +39,7 @@ static void FSLog(const char *message)
 	gettimeofday(&t, NULL);
 	
 	fh = fopen("/tmp/ypfs/log","a");
-	fprintf(fh, "%ld.%ld : %s\n", time.tv_sec, time.tv_usec, message);
+	fprintf(fh, "%ld.%ld : %s\n", t.tv_sec, t.tv_usec, message);
 	fclose(fh);
 	
 }
