@@ -62,6 +62,7 @@ static int ypfs_getattr(const char *path, struct stat *stbuf)
     if(strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0777;
         stbuf->st_nlink = 2;
+		stbug->st_size = 4096; // I'm directory
     }
     else if(strcmp(path, ypfs_path) == 0) {
         stbuf->st_mode = S_IFDIR | 0644;
@@ -146,11 +147,15 @@ static int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
 static int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi){
 	//todo:implement
 	FSLog("write trigger");
+	FSLog(path);
 	return 0;
 }
 
 static int ypfs_mkdir(const char* path, mode_t mode){
 	int res;
+
+	FSLog("mkdir");
+	FSLog(path);
 
 	res = mkdir(path, mode);
 	if (res == -1)
