@@ -527,9 +527,9 @@ int ypfs_flush(const char *path, struct fuse_file_info *fi)
 {
     int retstat = 0;
     
-    log_msg("\nbb_flush(path=\"%s\", fi=0x%08x)\n", path, fi);
-    // no need to get fpath on this one, since I work from fi->fh not the path
-    log_fi(fi);
+    // log_msg("\nbb_flush(path=\"%s\", fi=0x%08x)\n", path, fi);
+    //     // no need to get fpath on this one, since I work from fi->fh not the path
+    //     log_fi(fi);
 	
     return retstat;
 }
@@ -758,6 +758,7 @@ void *ypfs_init(struct fuse_conn_info *conn)
     //log_msg("\nbb_init()\n");
     
     //return BB_DATA;
+	return NULL;
 }
 
 /**
@@ -898,6 +899,40 @@ int ypfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info 
 
 
 
+/**
+* Perform POSIX file locking operation
+* 
+* The cmd argument will be either F_GETLK, F_SETLK or F_SETLKW.
+* For the meaning of fields in 'struct flock' see the man page for fcntl(2). 
+* The l_whence field will always be set to SEEK_SET.
+* 
+* For checking lock ownership, the 'fuse_file_info->owner' argument must be used.
+* For F_GETLK operation, the library will first check currently held locks, and 
+* if a conflicting lock is found it will return information without calling 
+* this method. This ensures, that for local locks the l_pid field 
+* is correctly filled in. The results may not be accurate in case 
+* of race conditions and in the presence of hard links, but 
+* it's unlikly that an application would rely on accurate 
+* GETLK results in these cases. If a conflicting lock is not 
+* found, this method will be called, and the filesystem may 
+* fill out l_pid by a meaningful value, or it may leave this field zero.
+*
+* For F_SETLK and F_SETLKW the l_pid field will be set to the pid 
+* of the process performing the locking operation.
+*
+* Note: if this method is not implemented, the kernel will still 
+* allow file locking to work locally. Hence it is only interesting 
+* for network filesystems and similar.
+*
+* Introduced in version 2.6
+*/
+int ypfs_lock(const char *, struct fuse_file_info *fi, int cmd, struct flock *)
+{
+	int retstat = 0;
+	
+	
+	return restat;
+}
 
 
 struct fuse_operations ypfs_oper = {
@@ -932,7 +967,7 @@ struct fuse_operations ypfs_oper = {
     .flush       = ypfs_flush,
     .fsyncdir    = ypfs_fsyncdir,
     .lock        = ypfs_lock,
-    .bmap        = ypfs_bmap,
+    // .bmap        = ypfs_bmap, // we don't need this
 };
 
 int main(int argc, char *argv[])
