@@ -103,7 +103,7 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 // bb_readlink() code by Bernardo F Costa (thanks!)
 int ypfs_readlink(const char *path, char *link, size_t size)
 {
-    int retstat = 0;
+    int ret = 0;
 /*
     char fpath[PATH_MAX];
     
@@ -111,15 +111,15 @@ int ypfs_readlink(const char *path, char *link, size_t size)
 	  path, link, size);
     bb_fullpath(fpath, path);
     
-    retstat = readlink(fpath, link, size - 1);
-    if (retstat < 0)
-	retstat = bb_error("bb_readlink readlink");
+    ret = readlink(fpath, link, size - 1);
+    if (ret < 0)
+	ret = bb_error("bb_readlink readlink");
     else  {
-	link[retstat] = '\0';
-	retstat = 0;
+	link[ret] = '\0';
+	ret = 0;
     }
 */
-    return retstat;
+    return ret;
 }
 
 /** Create a file node
@@ -130,7 +130,7 @@ int ypfs_readlink(const char *path, char *link, size_t size)
 // shouldn't that comment be "if" there is no.... ?
 int ypfs_mknod(const char *path, mode_t mode, dev_t dev)
 {
-    int retstat = 0;
+    int ret = 0;
     /*char fpath[PATH_MAX];
     
     log_msg("\nbb_mknod(path=\"%s\", mode=0%3o, dev=%lld)\n",
@@ -140,26 +140,26 @@ int ypfs_mknod(const char *path, mode_t mode, dev_t dev)
     // On Linux this could just be 'mknod(path, mode, rdev)' but this
     //  is more portable
     if (S_ISREG(mode)) {
-        retstat = open(fpath, O_CREAT | O_EXCL | O_WRONLY, mode);
-	if (retstat < 0)
-	    retstat = bb_error("bb_mknod open");
+        ret = open(fpath, O_CREAT | O_EXCL | O_WRONLY, mode);
+	if (ret < 0)
+	    ret = bb_error("bb_mknod open");
         else {
-            retstat = close(retstat);
-	    if (retstat < 0)
-		retstat = bb_error("bb_mknod close");
+            ret = close(ret);
+	    if (ret < 0)
+		ret = bb_error("bb_mknod close");
 	}
     } else
 	if (S_ISFIFO(mode)) {
-	    retstat = mkfifo(fpath, mode);
-	    if (retstat < 0)
-		retstat = bb_error("bb_mknod mkfifo");
+	    ret = mkfifo(fpath, mode);
+	    if (ret < 0)
+		ret = bb_error("bb_mknod mkfifo");
 	} else {
-	    retstat = mknod(fpath, mode, dev);
-	    if (retstat < 0)
-		retstat = bb_error("bb_mknod mknod");
+	    ret = mknod(fpath, mode, dev);
+	    if (ret < 0)
+		ret = bb_error("bb_mknod mknod");
 	}
     */
-    return retstat;
+    return ret;
 }
 
 /** Create a directory */
@@ -233,35 +233,35 @@ int ypfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 /** Remove a file */
 int ypfs_unlink(const char *path)
 {
-    int retstat = 0;
+    int ret = 0;
 	//     char fpath[PATH_MAX];
 	//     
 	//     log_msg("bb_unlink(path=\"%s\")\n",
 	//     path);
 	//     bb_fullpath(fpath, path);
 	//     
-	//     retstat = unlink(fpath);
-	//     if (retstat < 0)
-	// retstat = bb_error("bb_unlink unlink");
+	//     ret = unlink(fpath);
+	//     if (ret < 0)
+	// ret = bb_error("bb_unlink unlink");
     
-    return retstat;
+    return ret;
 }
 
 /** Remove a directory */
 int ypfs_rmdir(const char *path)
 {
-    int retstat = 0;
+    int ret = 0;
  	//    char fpath[PATH_MAX];
  	//     
  	//     log_msg("bb_rmdir(path=\"%s\")\n",
  	//     path);
  	//     bb_fullpath(fpath, path);
  	//     
- 	//     retstat = rmdir(fpath);
- 	//     if (retstat < 0)
- 	// retstat = bb_error("bb_rmdir rmdir");
+ 	//     ret = rmdir(fpath);
+ 	//     if (ret < 0)
+ 	// ret = bb_error("bb_rmdir rmdir");
     
-    return retstat;
+    return ret;
 }
 
 /** Create a symbolic link */
@@ -271,25 +271,25 @@ int ypfs_rmdir(const char *path)
 // unaltered, but insert the link into the mounted directory.
 int ypfs_symlink(const char *path, const char *link)
 {
-    int retstat = 0;
+    int ret = 0;
 	//     char flink[PATH_MAX];
 	//     
 	//     log_msg("\nbb_symlink(path=\"%s\", link=\"%s\")\n",
 	//     path, link);
 	//     bb_fullpath(flink, link);
 	//     
-	//     retstat = symlink(path, flink);
-	//     if (retstat < 0)
-	// retstat = bb_error("bb_symlink symlink");
+	//     ret = symlink(path, flink);
+	//     if (ret < 0)
+	// ret = bb_error("bb_symlink symlink");
     
-    return retstat;
+    return ret;
 }
 
 /** Rename a file */
 // both path and newpath are fs-relative
 int ypfs_rename(const char *path, const char *newpath)
 {
-    int retstat = 0;
+    int ret = 0;
 	//     char fpath[PATH_MAX];
 	//     char fnewpath[PATH_MAX];
 	//     
@@ -298,17 +298,17 @@ int ypfs_rename(const char *path, const char *newpath)
 	//     bb_fullpath(fpath, path);
 	//     bb_fullpath(fnewpath, newpath);
 	//     
-	//     retstat = rename(fpath, fnewpath);
-	//     if (retstat < 0)
-	// retstat = bb_error("bb_rename rename");
+	//     ret = rename(fpath, fnewpath);
+	//     if (ret < 0)
+	// ret = bb_error("bb_rename rename");
     
-    return retstat;
+    return ret;
 }
 
 /** Create a hard link to a file */
 int ypfs_link(const char *path, const char *newpath)
 {
-    int retstat = 0;
+    int ret = 0;
  	//    char fpath[PATH_MAX], fnewpath[PATH_MAX];
  	//     
  	//     log_msg("\nbb_link(path=\"%s\", newpath=\"%s\")\n",
@@ -316,11 +316,11 @@ int ypfs_link(const char *path, const char *newpath)
  	//     bb_fullpath(fpath, path);
  	//     bb_fullpath(fnewpath, newpath);
  	//     
- 	//     retstat = link(fpath, fnewpath);
- 	//     if (retstat < 0)
- 	// retstat = bb_error("bb_link link");
+ 	//     ret = link(fpath, fnewpath);
+ 	//     if (ret < 0)
+ 	// ret = bb_error("bb_link link");
  	//     
-    return retstat;
+    return ret;
 }
 
 /** Change the permission bits of a file */
@@ -350,36 +350,36 @@ int ypfs_chown(const char *path, uid_t uid, gid_t gid)
 /** Change the size of a file */
 int ypfs_truncate(const char *path, off_t newsize)
 {
-    int retstat = 0;
+    int ret = 0;
 	//     char fpath[PATH_MAX];
 	//     
 	//     log_msg("\nbb_truncate(path=\"%s\", newsize=%lld)\n",
 	//     path, newsize);
 	//     bb_fullpath(fpath, path);
 	//     
-	//     retstat = truncate(fpath, newsize);
-	//     if (retstat < 0)
+	//     ret = truncate(fpath, newsize);
+	//     if (ret < 0)
 	// bb_error("bb_truncate truncate");
     
-    return retstat;
+    return ret;
 }
 
 /** Change the access and/or modification times of a file */
-/* note -- I'll want to change this as soon as 2.6 is in debian testing */
-int ypfs_utime(const char *path, struct utimbuf *ubuf)
+/** Change the access and modification times of a file with nanosecond resolution */
+int ypfs_utimens(const char *path, const struct timespec tv[2])
 {
-    int retstat = 0;
+    int ret = 0;
  	//    char fpath[PATH_MAX];
  	//     
  	//     log_msg("\nbb_utime(path=\"%s\", ubuf=0x%08x)\n",
  	//     path, ubuf);
  	//     bb_fullpath(fpath, path);
  	//     
- 	//     retstat = utime(fpath, ubuf);
- 	//     if (retstat < 0)
- 	// retstat = bb_error("bb_utime utime");
+ 	//     ret = utime(fpath, ubuf);
+ 	//     if (ret < 0)
+ 	// ret = bb_error("bb_utime utime");
     
-    return retstat;
+    return ret;
 }
 
 
@@ -483,7 +483,7 @@ int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fu
  */
 int ypfs_statfs(const char *path, struct statvfs *statv)
 {
-    int retstat = 0;
+    int ret = 0;
     // char fpath[PATH_MAX];
     //     
     //     log_msg("\nbb_statfs(path=\"%s\", statv=0x%08x)\n",
@@ -491,13 +491,13 @@ int ypfs_statfs(const char *path, struct statvfs *statv)
     //     bb_fullpath(fpath, path);
     //     
     //     // get stats for underlying filesystem
-    //     retstat = statvfs(fpath, statv);
-    //     if (retstat < 0)
-    // 	retstat = bb_error("bb_statfs statvfs");
+    //     ret = statvfs(fpath, statv);
+    //     if (ret < 0)
+    // 	ret = bb_error("bb_statfs statvfs");
     //     
     //     log_statvfs(statv);
     
-    return retstat;
+    return ret;
 }
 
 /** Possibly flush cached data
@@ -525,13 +525,13 @@ int ypfs_statfs(const char *path, struct statvfs *statv)
  */
 int ypfs_flush(const char *path, struct fuse_file_info *fi)
 {
-    int retstat = 0;
+    int ret = 0;
     
     // log_msg("\nbb_flush(path=\"%s\", fi=0x%08x)\n", path, fi);
     //     // no need to get fpath on this one, since I work from fi->fh not the path
     //     log_fi(fi);
 	
-    return retstat;
+    return ret;
 }
 
 
@@ -574,64 +574,64 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
  */
 int ypfs_fsync(const char *path, int datasync, struct fuse_file_info *fi)
 {
-    int retstat = 0;
+    int ret = 0;
     
     // log_msg("\nbb_fsync(path=\"%s\", datasync=%d, fi=0x%08x)\n",
     // 	    path, datasync, fi);
     //     log_fi(fi);
     //     
     //     if (datasync)
-    // 	retstat = fdatasync(fi->fh);
+    // 	ret = fdatasync(fi->fh);
     //     else
-    // 	retstat = fsync(fi->fh);
+    // 	ret = fsync(fi->fh);
     //     
-    //     if (retstat < 0)
+    //     if (ret < 0)
     // 	bb_error("bb_fsync fsync");
     
-    return retstat;
+    return ret;
 }
 
 /** Set extended attributes */
 int ypfs_setxattr(const char *path, const char *name, const char *value, size_t size, int flags)
 {
-    int retstat = 0;
+    int ret = 0;
 	//     char fpath[PATH_MAX];
 	//     
 	//     log_msg("\nbb_setxattr(path=\"%s\", name=\"%s\", value=\"%s\", size=%d, flags=0x%08x)\n",
 	//     path, name, value, size, flags);
 	//     bb_fullpath(fpath, path);
 	//     
-	//     retstat = lsetxattr(fpath, name, value, size, flags);
-	//     if (retstat < 0)
-	// retstat = bb_error("bb_setxattr lsetxattr");
+	//     ret = lsetxattr(fpath, name, value, size, flags);
+	//     if (ret < 0)
+	// ret = bb_error("bb_setxattr lsetxattr");
     
-    return retstat;
+    return ret;
 }
 
 /** Get extended attributes */
 int ypfs_getxattr(const char *path, const char *name, char *value, size_t size)
 {
-    int retstat = 0;
+    int ret = 0;
 	//     char fpath[PATH_MAX];
 	//     
 	//     log_msg("\nbb_getxattr(path = \"%s\", name = \"%s\", value = 0x%08x, size = %d)\n",
 	//     path, name, value, size);
 	//     bb_fullpath(fpath, path);
 	//     
-	//     retstat = lgetxattr(fpath, name, value, size);
-	//     if (retstat < 0)
-	// retstat = bb_error("bb_getxattr lgetxattr");
+	//     ret = lgetxattr(fpath, name, value, size);
+	//     if (ret < 0)
+	// ret = bb_error("bb_getxattr lgetxattr");
 	//     else
 	// log_msg("    value = \"%s\"\n", value);
     
-    return retstat;
+    return ret;
 }
 
 
 /** List extended attributes */
 int ypfs_listxattr(const char *path, char *list, size_t size)
 {
-    int retstat = 0;
+    int ret = 0;
  	//    char fpath[PATH_MAX];
  	//     char *ptr;
  	//     
@@ -640,32 +640,32 @@ int ypfs_listxattr(const char *path, char *list, size_t size)
  	//     );
  	//     bb_fullpath(fpath, path);
  	//     
- 	//     retstat = llistxattr(fpath, list, size);
- 	//     if (retstat < 0)
- 	// retstat = bb_error("bb_listxattr llistxattr");
+ 	//     ret = llistxattr(fpath, list, size);
+ 	//     if (ret < 0)
+ 	// ret = bb_error("bb_listxattr llistxattr");
  	//     
- 	//     log_msg("    returned attributes (length %d):\n", retstat);
- 	//     for (ptr = list; ptr < list + retstat; ptr += strlen(ptr)+1)
+ 	//     log_msg("    returned attributes (length %d):\n", ret);
+ 	//     for (ptr = list; ptr < list + ret; ptr += strlen(ptr)+1)
  	// log_msg("    \"%s\"\n", ptr);
     
-    return retstat;
+    return ret;
 }
 
 /** Remove extended attributes */
 int bb_removexattr(const char *path, const char *name)
 {
-    int retstat = 0;
+    int ret = 0;
     // char fpath[PATH_MAX];
     //     
     //     log_msg("\nbb_removexattr(path=\"%s\", name=\"%s\")\n",
     // 	    path, name);
     //     bb_fullpath(fpath, path);
     //     
-    //     retstat = lremovexattr(fpath, name);
-    //     if (retstat < 0)
-    // 	retstat = bb_error("bb_removexattr lrmovexattr");
+    //     ret = lremovexattr(fpath, name);
+    //     if (ret < 0)
+    // 	ret = bb_error("bb_removexattr lrmovexattr");
     
-    return retstat;
+    return ret;
 }
 
 /** Open directory
@@ -678,7 +678,7 @@ int bb_removexattr(const char *path, const char *name)
 int ypfs_opendir(const char *path, struct fuse_file_info *fi)
 {
     
-    int retstat = 0;
+    int ret = 0;
 	// DIR *dp;
     // char fpath[PATH_MAX];
     //     
@@ -688,13 +688,13 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
     //     
     //     dp = opendir(fpath);
     //     if (dp == NULL)
-    // 	retstat = bb_error("bb_opendir opendir");
+    // 	ret = bb_error("bb_opendir opendir");
     //     
     //     fi->fh = (intptr_t) dp;
     //     
     //     log_fi(fi);
     
-    return retstat;
+    return ret;
 }
 
 
@@ -704,7 +704,7 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
  */
 int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
 {
-    int retstat = 0;
+    int ret = 0;
     
     // log_msg("\nbb_releasedir(path=\"%s\", fi=0x%08x)\n",
     // 	    path, fi);
@@ -712,7 +712,7 @@ int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
     //    
     //    closedir((DIR *) (uintptr_t) fi->fh);
     
-    return retstat;
+    return ret;
 }
 
 /** Synchronize directory contents
@@ -726,13 +726,13 @@ int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
 // happens to be a directory? ???
 int ypfs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi)
 {
-    int retstat = 0;
+    int ret = 0;
     
     // log_msg("\nbb_fsyncdir(path=\"%s\", datasync=%d, fi=0x%08x)\n",
     // 	    path, datasync, fi);
     //     log_fi(fi);
     
-    return retstat;
+    return ret;
 }
 
 /**
@@ -789,19 +789,19 @@ void ypfs_destroy(void *userdata) {
  */
 int ypfs_access(const char *path, int mask)
 {
-    int retstat = 0;
+    int ret = 0;
 	//     char fpath[PATH_MAX];
 	//    
 	//     log_msg("\nbb_access(path=\"%s\", mask=0%o)\n",
 	//     path, mask);
 	//     bb_fullpath(fpath, path);
 	//     
-	//     retstat = access(fpath, mask);
+	//     ret = access(fpath, mask);
 	//     
-	//     if (retstat < 0)
-	// retstat = bb_error("bb_access access");
+	//     if (ret < 0)
+	// ret = bb_error("bb_access access");
     
-    return retstat;
+    return ret;
 }
 
 
@@ -819,7 +819,7 @@ int ypfs_access(const char *path, int mask)
  */
 int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
-    int retstat = 0;
+    int ret = 0;
  	//    char fpath[PATH_MAX];
  	//     int fd;
  	//     
@@ -829,13 +829,13 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
  	//     
  	//     fd = creat(fpath, mode);
  	//     if (fd < 0)
- 	// retstat = bb_error("bb_create creat");
+ 	// ret = bb_error("bb_create creat");
  	//     
  	//     fi->fh = fd;
  	//     
  	//     log_fi(fi);
     
-    return retstat;
+    return ret;
 }
 
 /**
@@ -852,17 +852,17 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
  */
 int ypfs_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi)
 {
-    int retstat = 0;
+    int ret = 0;
     
     // log_msg("\nbb_ftruncate(path=\"%s\", offset=%lld, fi=0x%08x)\n",
     // 	    path, offset, fi);
     //     log_fi(fi);
     //     
-    //     retstat = ftruncate(fi->fh, offset);
-    //     if (retstat < 0)
-    // 	retstat = bb_error("bb_ftruncate ftruncate");
+    //     ret = ftruncate(fi->fh, offset);
+    //     if (ret < 0)
+    // 	ret = bb_error("bb_ftruncate ftruncate");
     
-    return retstat;
+    return ret;
 }
 
 /**
@@ -882,19 +882,19 @@ int ypfs_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi)
 // the path...
 int ypfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info *fi)
 {
-    int retstat = 0;
+    int ret = 0;
     
  	//    log_msg("\nbb_fgetattr(path=\"%s\", statbuf=0x%08x, fi=0x%08x)\n",
  	//     path, statbuf, fi);
  	//     log_fi(fi);
  	//     
- 	//     retstat = fstat(fi->fh, statbuf);
- 	//     if (retstat < 0)
- 	// retstat = bb_error("bb_fgetattr fstat");
+ 	//     ret = fstat(fi->fh, statbuf);
+ 	//     if (ret < 0)
+ 	// ret = bb_error("bb_fgetattr fstat");
  	//     
  	//     log_stat(statbuf);
     
-    return retstat;
+    return ret;
 }
 
 
@@ -926,14 +926,15 @@ int ypfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info 
 *
 * Introduced in version 2.6
 */
+/*
 int ypfs_lock(const char *, struct fuse_file_info *fi, int cmd, struct flock *)
 {
-	int retstat = 0;
+	int ret = 0;
 	
 	
-	return restat;
+	return ret;
 }
-
+*/
 
 struct fuse_operations ypfs_oper = {
     .init        = ypfs_init,
@@ -966,7 +967,7 @@ struct fuse_operations ypfs_oper = {
     .fsync       = ypfs_fsync,
     .flush       = ypfs_flush,
     .fsyncdir    = ypfs_fsyncdir,
-    .lock        = ypfs_lock,
+    // .lock        = ypfs_lock, // no idea on how it works
     // .bmap        = ypfs_bmap, // we don't need this
 };
 
