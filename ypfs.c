@@ -76,11 +76,11 @@ int find_my_config()
 		
 		if ( strcmp(username, "") != 0) {
 			// catch the username, it is good
-			return 1;
+			ret = 1;
 		}
 	}
 	
-	return 0;
+	return ret;
 }
 
 int make_my_config()
@@ -92,10 +92,10 @@ int make_my_config()
 	if (fh != NULL) {
 		fprintf(fh , "%s", username);
 		fclose(fh);
-		return 1;
+		ret = 1;
 	} 
 	printf("Fail to create config...\nPlease ensure you are admin.\nExit the system!\n");
-	return 0;
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////
@@ -1049,7 +1049,8 @@ int main(int argc, char *argv[])
 	strcpy(ypfs_data->username ,username);
 	FSLog("about to call fuse_main");
     fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
-	FSLog("return from fuse_main: %d", fuse_ret);
+	FSLog("fuse_main:");
+	FSLog(fuse_ret);
 	
 	return fuse_ret;
 }
