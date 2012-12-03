@@ -905,7 +905,6 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	
 	fd = -1;
 	//fd = creat(fpath, mode);
-	FSLog(fd);
 	
 	if (fd < 0)
 		ret = -errno;
@@ -976,6 +975,7 @@ int ypfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info 
     FSLog("fgetattr");
 	FSLog(path);
 	ret = fstat(fi->fh, statbuf);
+	
 	if (ret < 0)
 		ret = -errno;
  	//    log_msg("\nbb_fgetattr(path=\"%s\", statbuf=0x%08x, fi=0x%08x)\n",
