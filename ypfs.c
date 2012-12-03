@@ -22,6 +22,8 @@ Author: Ho Pan Chan, Robert Harrison
 #include <dirent.h>
 #include <errno.h>
 #include <time.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
@@ -31,7 +33,7 @@ Author: Ho Pan Chan, Robert Harrison
 #define SERCET_LOCATION "/tmp/ypfs/.config"
 
 struct ypfs_session {
-    char username[30];
+	char username[30];
     char *private_key_location;
 	char *public_key_location;
 };
@@ -61,7 +63,7 @@ void FSLog(const char *message)
 	
 }
 
-bool find_my_config()
+int find_my_config()
 {
 	int ret = 0;
 	FILE *fh;
@@ -74,14 +76,14 @@ bool find_my_config()
 		
 		if ( strcmp(username, "") != 0) {
 			// catch the username, it is good
-			return TRUE;
+			return 1;
 		}
 	}
 	
-	return FALSE;
+	return 0;
 }
 
-void make_my_config()
+int make_my_config()
 {
 	int ret = 0;
 	FILE *fh;
@@ -90,10 +92,10 @@ void make_my_config()
 	if (fh != NULL) {
 		fprintf(fh , "%s", username);
 		fclose(fh);
-	}
-	
+		return 1;
+	} 
 	printf("Fail to create config...\nPlease ensure you are admin.\nExit the system!\n");
-	exit(-1);
+	return 0;
 }
 
 ///////////////////////////////////////////////////////////
@@ -1020,7 +1022,7 @@ struct fuse_operations ypfs_oper = {
 
 int main(int argc, char *argv[])
 {
-	bool private_file_exists = false;
+	int private_file_exists = 0;
 	struct ypfs_session *ypfs_data;
 	int fuse_ret = 0;
 	
@@ -1037,7 +1039,9 @@ int main(int argc, char *argv[])
 	if (!private_file_exists) {
 		printf("This is your first time to use this system, please register...\nUsername: ");
 		scanf("%s", username);
-		make_my_config();
+		if (!make_my_config()) {
+			return -1;
+		};
 	}
 	
 	printf("Welcome %s!\n", username);
