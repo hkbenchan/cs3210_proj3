@@ -1049,8 +1049,8 @@ int main(int argc, char *argv[])
 	strcpy(ypfs_data->username ,username);
 	FSLog("about to call fuse_main");
     fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
-	FSLog("fuse_main:");
-	FSLog(fuse_ret);
+	//FSLog("fuse_main:");
+	//FSLog(fuse_ret);
 	
 	return fuse_ret;
 }
