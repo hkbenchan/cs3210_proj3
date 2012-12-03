@@ -1069,10 +1069,12 @@ int main(int argc, char *argv[])
 		if (make_my_config() == 0) {
 			return -1;
 		}
-		for (i = 0; i<argc; i++) {
-			printf("ARG %d: %s\n",i,argv[i]);
-		}
+		
 		//ypfs_data->mount_point = realpath(argv[], NULL);
+	}
+	
+	for (i = 0; i<argc; i++) {
+		printf("ARG %d: %s\n",i,argv[i]);
 	}
 	
 	printf("Welcome %s!\n", username);
