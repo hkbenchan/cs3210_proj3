@@ -26,9 +26,7 @@ Author: Ho Pan Chan, Robert Harrison
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
-#endif
 
 #define DEBUG 1
 #define SERCET_LOCATION "/tmp/ypfs/.config"
@@ -461,7 +459,7 @@ int ypfs_truncate(const char *path, off_t newsize)
 /** Change the access and modification times of a file with nanosecond resolution */
 int ypfs_utimens(const char *path, const struct timespec tv[2])
 {
-    int ret = 0;
+	int ret = -1;
  	char fpath[MAX_PATH_LENGTH];
 	FSLog("utimens");
 	FSLog(path);
@@ -470,10 +468,11 @@ int ypfs_utimens(const char *path, const struct timespec tv[2])
  	//     path, ubuf);
  	ypfs_fullpath(fpath, path);
  	    
- 	ret = utimes(fpath, tv);
- 	if (ret < 0)
- 		ret = -errno
+ 	//ret = utimes(fpath, tv);
 	
+ 	// if (ret < 0)
+ 	//  		ret = -errno
+ 	// 	
     return ret;
 }
 
@@ -740,7 +739,6 @@ int ypfs_listxattr(const char *path, char *list, size_t size)
 {
     int ret = 0;
  	char fpath[MAX_PATH_LENGTH];
- 	char *ptr;
 	FSLog("listxattr");
 	FSLog(path);
  	//     
