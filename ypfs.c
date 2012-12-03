@@ -138,25 +138,26 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 	FSLog("getattr");
 	FSLog(path);
 	
-    // memset(stbuf, 0, sizeof(struct stat));
-    //     if(strcmp(path, "/") == 0) {
-    //         stbuf->st_mode = S_IFDIR | 0777;
-    //         stbuf->st_nlink = 2;
-    // 		stbuf->st_size = 4096; // I'm directory
-    //     }
-    //     else if(strcmp(path, ypfs_path) == 0) {
-    //         stbuf->st_mode = S_IFDIR | 0644;
-    //         stbuf->st_nlink = 2;
-    //         stbuf->st_size = 4096;
-    //     }
-    //     else {
+    memset(stbuf, 0, sizeof(struct stat));
+    if(strcmp(path, "/") == 0) {
+        stbuf->st_mode = S_IFDIR | 0777;
+        stbuf->st_nlink = 2;
+		stbuf->st_size = 4096; // I'm directory
+    }
+    else if(strcmp(path, ypfs_path) == 0) {
+        stbuf->st_mode = S_IFDIR | 0644;
+        stbuf->st_nlink = 2;
+        stbuf->st_size = 4096;
+    }
+    else {
 		ypfs_fullpath(fpath, path);
 		ret = lstat(fpath, stbuf);
 		
 		if (ret < 0) {
 			ret = -errno;
 		}
-	// }
+	}
+	
     return ret;
 }
 
