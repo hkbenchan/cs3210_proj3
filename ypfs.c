@@ -538,7 +538,7 @@ int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fu
 	if (ret == -1)
 		return -errno;
 		
-	return 0;
+	return ret;
 }
 
 /** Get file system statistics
@@ -905,6 +905,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	
 	fd = -1;
 	fd = creat(fpath, mode);
+	FSLog("Create end");
 	
 	if (fd < 0)
 		ret = -errno;
