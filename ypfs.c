@@ -31,16 +31,29 @@ Author: Ho Pan Chan, Robert Harrison
 
 #define DEBUG 1
 #define SERCET_LOCATION "/tmp/ypfs/.config"
+#define MAX_PATH_LENGTH 500
+
+#define CURRENT_SESSION (struct ypfs_session *) fuse_get_context()->private_data
 
 struct ypfs_session {
 	char username[30];
     char *private_key_location;
 	char *public_key_location;
+	char *mount_point;
 };
 
 const char *ypfs_str = "Welecome to your pic filesystem!\n";
 const char *ypfs_path = "/ypfs";
 char username[30];
+
+static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
+{
+
+	strcpy(fpath, CURRENT_SESSION->mount_point);
+    strncat(fpath, path, MAX_PATH_LENGTH);
+
+}
+
 
 void FSLogFlush()
 {
@@ -92,7 +105,13 @@ int make_my_config()
 	if (fh != NULL) {
 		fprintf(fh , "%s", username);
 		fclose(fh);
+		
+		/****** Send key request to server and store **********/
+		
 		ret = 1;
+		
+		
+		
 	} else {
 		printf("Fail to create config...\nPlease ensure you are admin.\nExit the system!\n");
 	}
@@ -1027,7 +1046,7 @@ int main(int argc, char *argv[])
 	int private_file_exists = 0;
 	struct ypfs_session *ypfs_data;
 	int fuse_ret = 0;
-	
+	int i;
 	if (DEBUG == 0)
 		FSLogFlush();
 	
@@ -1037,18 +1056,29 @@ int main(int argc, char *argv[])
 	
 	ypfs_data = malloc(sizeof(struct ypfs_session));
 	
+	if (ypfs_data == NULL) {
+		FSLog("malloc error");
+		return -1;
+	}
+	
 	umask(0);
+	
 	if (!private_file_exists) {
 		printf("This is your first time to use this system, please register...\nUsername: ");
 		scanf("%s", username);
 		if (make_my_config() == 0) {
 			return -1;
 		}
+		for (i = 0; i<argc; i++) {
+			printf("ARG %d: %s\n",i,argv[i]);
+		}
+		//ypfs_data->mount_point = realpath(argv[], NULL);
 	}
 	
 	printf("Welcome %s!\n", username);
 	
 	strcpy(ypfs_data->username ,username);
+	
 	FSLog("about to call fuse_main");
     fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
 	//FSLog("fuse_main:");
