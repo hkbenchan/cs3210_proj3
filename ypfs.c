@@ -70,7 +70,7 @@ void FSLog(const char *message)
 int ypfs_getattr(const char *path, struct stat *stbuf)
 {
     int res = 0;
-
+	FSLog("getattr");
     memset(stbuf, 0, sizeof(struct stat));
     if(strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0777;
@@ -119,6 +119,7 @@ int ypfs_readlink(const char *path, char *link, size_t size)
 	ret = 0;
     }
 */
+	FSLog("readlink");
     return ret;
 }
 
@@ -159,6 +160,7 @@ int ypfs_mknod(const char *path, mode_t mode, dev_t dev)
 		ret = bb_error("bb_mknod mknod");
 	}
     */
+	FSLog("mknod");
     return ret;
 }
 
@@ -243,7 +245,7 @@ int ypfs_unlink(const char *path)
 	//     ret = unlink(fpath);
 	//     if (ret < 0)
 	// ret = bb_error("bb_unlink unlink");
-    
+	FSLog("unlink");
     return ret;
 }
 
@@ -260,7 +262,7 @@ int ypfs_rmdir(const char *path)
  	//     ret = rmdir(fpath);
  	//     if (ret < 0)
  	// ret = bb_error("bb_rmdir rmdir");
-    
+	FSLog("rmdir");
     return ret;
 }
 
@@ -281,7 +283,7 @@ int ypfs_symlink(const char *path, const char *link)
 	//     ret = symlink(path, flink);
 	//     if (ret < 0)
 	// ret = bb_error("bb_symlink symlink");
-    
+	FSLog("symlink");
     return ret;
 }
 
@@ -301,7 +303,7 @@ int ypfs_rename(const char *path, const char *newpath)
 	//     ret = rename(fpath, fnewpath);
 	//     if (ret < 0)
 	// ret = bb_error("bb_rename rename");
-    
+	FSLog("rename");
     return ret;
 }
 
@@ -319,7 +321,7 @@ int ypfs_link(const char *path, const char *newpath)
  	//     ret = link(fpath, fnewpath);
  	//     if (ret < 0)
  	// ret = bb_error("bb_link link");
- 	//     
+	FSLog("link");
     return ret;
 }
 
@@ -327,7 +329,7 @@ int ypfs_link(const char *path, const char *newpath)
 int ypfs_chmod(const char *path, mode_t mode)
 {
 	int res;
-
+	FSLog("chmod");
 	res = chmod(path, mode);
 	if (res == -1)
 		return -errno;
@@ -339,7 +341,7 @@ int ypfs_chmod(const char *path, mode_t mode)
 int ypfs_chown(const char *path, uid_t uid, gid_t gid)
 {
 	int res;
-
+	FSLog("chown");
 	res = lchown(path, uid, gid);
 	if (res == -1)
 		return -errno;
@@ -360,7 +362,7 @@ int ypfs_truncate(const char *path, off_t newsize)
 	//     ret = truncate(fpath, newsize);
 	//     if (ret < 0)
 	// bb_error("bb_truncate truncate");
-    
+	FSLog("truncate");
     return ret;
 }
 
@@ -378,7 +380,7 @@ int ypfs_utimens(const char *path, const struct timespec tv[2])
  	//     ret = utime(fpath, ubuf);
  	//     if (ret < 0)
  	// ret = bb_error("bb_utime utime");
-    
+	FSLog("utimens");
     return ret;
 }
 
@@ -441,7 +443,7 @@ int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
                       struct fuse_file_info *fi)
 {
 	int ret = 0;
-	
+	FSLog("read");
 	ret = pread(fi->fh, buf, size, offset);
 	if (ret == -1)
 		return -errno;
@@ -496,7 +498,7 @@ int ypfs_statfs(const char *path, struct statvfs *statv)
     // 	ret = bb_error("bb_statfs statvfs");
     //     
     //     log_statvfs(statv);
-    
+	FSLog("statfs");
     return ret;
 }
 
@@ -530,7 +532,7 @@ int ypfs_flush(const char *path, struct fuse_file_info *fi)
     // log_msg("\nbb_flush(path=\"%s\", fi=0x%08x)\n", path, fi);
     //     // no need to get fpath on this one, since I work from fi->fh not the path
     //     log_fi(fi);
-	
+	FSLog("flush");
     return ret;
 }
 
@@ -587,7 +589,7 @@ int ypfs_fsync(const char *path, int datasync, struct fuse_file_info *fi)
     //     
     //     if (ret < 0)
     // 	bb_error("bb_fsync fsync");
-    
+	FSLog("fsync");
     return ret;
 }
 
@@ -604,7 +606,7 @@ int ypfs_setxattr(const char *path, const char *name, const char *value, size_t 
 	//     ret = lsetxattr(fpath, name, value, size, flags);
 	//     if (ret < 0)
 	// ret = bb_error("bb_setxattr lsetxattr");
-    
+	FSLog("setxattr");
     return ret;
 }
 
@@ -623,7 +625,7 @@ int ypfs_getxattr(const char *path, const char *name, char *value, size_t size)
 	// ret = bb_error("bb_getxattr lgetxattr");
 	//     else
 	// log_msg("    value = \"%s\"\n", value);
-    
+	FSLog("getxattr");
     return ret;
 }
 
@@ -647,7 +649,7 @@ int ypfs_listxattr(const char *path, char *list, size_t size)
  	//     log_msg("    returned attributes (length %d):\n", ret);
  	//     for (ptr = list; ptr < list + ret; ptr += strlen(ptr)+1)
  	// log_msg("    \"%s\"\n", ptr);
-    
+	FSLog("listxattr");
     return ret;
 }
 
@@ -664,7 +666,7 @@ int bb_removexattr(const char *path, const char *name)
     //     ret = lremovexattr(fpath, name);
     //     if (ret < 0)
     // 	ret = bb_error("bb_removexattr lrmovexattr");
-    
+	FSLog("removexattr");
     return ret;
 }
 
@@ -693,7 +695,7 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
     //     fi->fh = (intptr_t) dp;
     //     
     //     log_fi(fi);
-    
+	FSLog("opendir");
     return ret;
 }
 
@@ -711,7 +713,7 @@ int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
     //    log_fi(fi);
     //    
     //    closedir((DIR *) (uintptr_t) fi->fh);
-    
+	FSLog("releasedir");
     return ret;
 }
 
@@ -731,7 +733,7 @@ int ypfs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi)
     // log_msg("\nbb_fsyncdir(path=\"%s\", datasync=%d, fi=0x%08x)\n",
     // 	    path, datasync, fi);
     //     log_fi(fi);
-    
+	FSLog("fsyncdir");
     return ret;
 }
 
@@ -754,7 +756,7 @@ int ypfs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi)
 // FUSE).
 void *ypfs_init(struct fuse_conn_info *conn)
 {
-    
+	FSLog("init");
     //log_msg("\nbb_init()\n");
     
     //return BB_DATA;
@@ -800,7 +802,7 @@ int ypfs_access(const char *path, int mask)
 	//     
 	//     if (ret < 0)
 	// ret = bb_error("bb_access access");
-    
+	FSLog("access");
     return ret;
 }
 
@@ -834,7 +836,8 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
  	//     fi->fh = fd;
  	//     
  	//     log_fi(fi);
-    
+
+	FSLog("Create");
     return ret;
 }
 
@@ -861,7 +864,7 @@ int ypfs_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi)
     //     ret = ftruncate(fi->fh, offset);
     //     if (ret < 0)
     // 	ret = bb_error("bb_ftruncate ftruncate");
-    
+	FSLog("ftruncate");
     return ret;
 }
 
@@ -894,6 +897,7 @@ int ypfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info 
  	//     
  	//     log_stat(statbuf);
     
+	FSLog("fgetattr");
     return ret;
 }
 
@@ -975,7 +979,7 @@ int main(int argc, char *argv[])
 {
 	if (DEBUG == 0)
 		FSLogFlush();
-
+		
 	FSLog("---Start---");
     umask(0);
 	printf("Username: ");
