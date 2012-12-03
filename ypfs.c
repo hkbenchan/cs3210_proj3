@@ -107,9 +107,7 @@ int make_my_config()
 		
 		/****** Send key request to server and store **********/
 		
-		ret = 1;
-		
-		
+		ret = 1;		
 		
 	} else {
 		printf("Fail to create config...\nPlease ensure you are admin.\nExit the system!\n");
@@ -796,13 +794,13 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
     // 	  path, fi);
     ypfs_fullpath(fpath, path);
     //     
-    dp = opendir(fpath);
-    if (dp == NULL) {
-		ret = -errno;
-		FSLog("dp null");
-	}
-    
-    fi->fh = (intptr_t) dp;
+  	//   dp = opendir(fpath);
+  	//     if (dp == NULL) {
+  	// 	ret = -errno;
+  	// 	FSLog("dp null");
+  	// }
+  	//     
+  	//     fi->fh = (intptr_t) dp;
         
     //     log_fi(fi);
 	
