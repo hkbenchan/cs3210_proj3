@@ -4,6 +4,8 @@
 #include <unistd.h>
  
 #include <curl/curl.h>
+
+#include "ypfs_curl.h"
  
 /*
  * This example shows a HTTP PUT operation. PUTs a file given as a command
