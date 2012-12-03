@@ -28,7 +28,13 @@ Author: Ho Pan Chan, Robert Harrison
 #endif
 
 #define DEBUG 1
+#define SERCET_LOCATION "/tmp/ypfs/.config"
 
+struct ypfs_session {
+    char username[30];
+    char *private_key_location;
+	char *public_key_location;
+};
 
 const char *ypfs_str = "Welecome to your pic filesystem!\n";
 const char *ypfs_path = "/ypfs";
@@ -48,12 +54,47 @@ void FSLog(const char *message)
 	gettimeofday(&t, NULL);
 	
 	fh = fopen("/tmp/ypfs/log","a");
-	fprintf(fh, "%ld.%ld : %s\n", t.tv_sec, t.tv_usec, message);
-	fclose(fh);
+	if (fh != NULL) {
+		fprintf(fh, "%ld.%ld : %s\n", t.tv_sec, t.tv_usec, message);
+		fclose(fh);
+	}
 	
 }
 
+bool find_my_config()
+{
+	int ret = 0;
+	FILE *fh;
+	fh = fopen(SERCET_LOCATION,"r");
+	
+	if (fh != NULL) {
+		
+		ret = fscanf(fh,"%s", username);
+		fclose(fh);
+		
+		if ( strcmp(username, "") != 0) {
+			// catch the username, it is good
+			return TRUE;
+		}
+	}
+	
+	return FALSE;
+}
 
+void make_my_config()
+{
+	int ret = 0;
+	FILE *fh;
+	fh = fopen(SERCET_LOCATION, "w");
+	
+	if (fh != NULL) {
+		fprintf(fh , "%s", username);
+		fclose(fh);
+	}
+	
+	printf("Fail to create config...\nPlease ensure you are admin.\nExit the system!\n");
+	exit(-1);
+}
 
 ///////////////////////////////////////////////////////////
 //
@@ -175,7 +216,7 @@ int ypfs_mkdir(const char* path, mode_t mode){
 	if (res == -1)
 		return -errno;
 
-	return 0;
+	return res;
 }
 
 
@@ -760,7 +801,8 @@ void *ypfs_init(struct fuse_conn_info *conn)
     //log_msg("\nbb_init()\n");
     
     //return BB_DATA;
-	return NULL;
+	//return NULL;
+	return (struct ypfs_session *)fuse_get_context()->private_data;
 }
 
 /**
@@ -773,6 +815,7 @@ void *ypfs_init(struct fuse_conn_info *conn)
 void ypfs_destroy(void *userdata) {
 	
 	//printf("Bye bye %s\n", username);
+	
 	FSLog("---End---");
 	return ;
 }
@@ -977,12 +1020,32 @@ struct fuse_operations ypfs_oper = {
 
 int main(int argc, char *argv[])
 {
+	bool private_file_exists = false;
+	struct ypfs_session *ypfs_data;
+	int fuse_ret = 0;
+	
 	if (DEBUG == 0)
 		FSLogFlush();
-		
+	
 	FSLog("---Start---");
-    umask(0);
-	printf("Username: ");
-	scanf("%s", username);
-    return fuse_main(argc, argv, &ypfs_oper, NULL);
+	// check if private file exists
+	private_file_exists = find_my_config();
+	
+	ypfs_data = malloc(sizeof(struct ypfs_session));
+	
+	umask(0);
+	if (!private_file_exists) {
+		printf("This is your first time to use this system, please register...\nUsername: ");
+		scanf("%s", username);
+		make_my_config();
+	}
+	
+	printf("Welcome %s!\n", username);
+	
+	strcpy(ypfs_data->username ,username);
+	FSLog("about to call fuse_main");
+    fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
+	FSLog("return from fuse_main: %d", fuse_ret);
+	
+	return fuse_ret;
 }
