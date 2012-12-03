@@ -839,6 +839,12 @@ void ypfs_destroy(void *userdata) {
 	
 	//printf("Bye bye %s\n", username);
 	
+	// deallocate the object and free
+	free(CURRENT_SESSION->mount_point);
+	// free(CURRENT_SESSION->public_key_location);
+	// free(CURRENT_SESSION->private_key_location);
+	free(CURRENT_SESSION);
+	
 	FSLog("---End---");
 	return ;
 }
@@ -1050,6 +1056,11 @@ int main(int argc, char *argv[])
 	if (DEBUG == 0)
 		FSLogFlush();
 	
+	if (argc<2) {
+		printf("./ypfs MOUNT_POINT");
+		return -1;
+	}
+	
 	FSLog("---Start---");
 	// check if private file exists
 	private_file_exists = find_my_config();
@@ -1073,10 +1084,8 @@ int main(int argc, char *argv[])
 		//ypfs_data->mount_point = realpath(argv[], NULL);
 	}
 	
-	for (i = 0; i<argc; i++) {
-		printf("ARG %d: %s\n",i,argv[i]);
-	}
-	
+	ypfs_data->mount_point = realpath(argv[1], NULL);
+	printf("Your mount point: %s\n", ypfs_data->mount_point);
 	printf("Welcome %s!\n", username);
 	
 	strcpy(ypfs_data->username ,username);
