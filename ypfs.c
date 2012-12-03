@@ -26,7 +26,9 @@ Author: Ho Pan Chan, Robert Harrison
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
+#endif
 
 #define DEBUG 1
 #define SERCET_LOCATION "/tmp/ypfs/.config"
@@ -136,21 +138,25 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 	FSLog("getattr");
 	FSLog(path);
 	
-    memset(stbuf, 0, sizeof(struct stat));
-    if(strcmp(path, "/") == 0) {
-        stbuf->st_mode = S_IFDIR | 0777;
-        stbuf->st_nlink = 2;
-		stbuf->st_size = 4096; // I'm directory
-    }
-    else if(strcmp(path, ypfs_path) == 0) {
-        stbuf->st_mode = S_IFDIR | 0644;
-        stbuf->st_nlink = 2;
-        stbuf->st_size = 4096;
-    }
-    else {
+    // memset(stbuf, 0, sizeof(struct stat));
+    //     if(strcmp(path, "/") == 0) {
+    //         stbuf->st_mode = S_IFDIR | 0777;
+    //         stbuf->st_nlink = 2;
+    // 		stbuf->st_size = 4096; // I'm directory
+    //     }
+    //     else if(strcmp(path, ypfs_path) == 0) {
+    //         stbuf->st_mode = S_IFDIR | 0644;
+    //         stbuf->st_nlink = 2;
+    //         stbuf->st_size = 4096;
+    //     }
+    //     else {
 		ypfs_fullpath(fpath, path);
 		ret = lstat(fpath, stbuf);
-	}
+		
+		if (ret < 0) {
+			ret = -errno;
+		}
+	// }
     return ret;
 }
 
@@ -692,6 +698,7 @@ int ypfs_fsync(const char *path, int datasync, struct fuse_file_info *fi)
 }
 
 /** Set extended attributes */
+/*
 int ypfs_setxattr(const char *path, const char *name, const char *value, size_t size, int flags)
 {
     int ret = 0;
@@ -709,8 +716,9 @@ int ypfs_setxattr(const char *path, const char *name, const char *value, size_t 
 	
     return ret;
 }
-
+*/
 /** Get extended attributes */
+/*
 int ypfs_getxattr(const char *path, const char *name, char *value, size_t size)
 {
     int ret = 0;
@@ -730,9 +738,10 @@ int ypfs_getxattr(const char *path, const char *name, char *value, size_t size)
 	
     return ret;
 }
-
+*/
 
 /** List extended attributes */
+/*
 int ypfs_listxattr(const char *path, char *list, size_t size)
 {
     int ret = 0;
@@ -755,8 +764,9 @@ int ypfs_listxattr(const char *path, char *list, size_t size)
 
     return ret;
 }
-
+*/
 /** Remove extended attributes */
+/*
 int ypfs_removexattr(const char *path, const char *name)
 {
     int ret = 0;
@@ -773,7 +783,7 @@ int ypfs_removexattr(const char *path, const char *name)
 	
     return ret;
 }
-
+*/
 /** Open directory
  *
  * This method should check if the open operation is permitted for
@@ -1103,10 +1113,10 @@ struct fuse_operations ypfs_oper = {
     .fsync       = ypfs_fsync,
     .flush       = ypfs_flush,
     .fsyncdir    = ypfs_fsyncdir,
-	.setxattr 	 = ypfs_setxattr,
-  	.getxattr 	 = ypfs_getxattr,
-	.listxattr	 = ypfs_listxattr,
-	.removexattr = ypfs_removexattr,
+	// .setxattr 	 = ypfs_setxattr,
+	//   	.getxattr 	 = ypfs_getxattr,
+	// 	.listxattr	 = ypfs_listxattr,
+	// 	.removexattr = ypfs_removexattr,
     // .lock        = ypfs_lock, // no idea on how it works
     // .bmap        = ypfs_bmap, // we don't need this
 };
