@@ -93,8 +93,10 @@ int make_my_config()
 		fprintf(fh , "%s", username);
 		fclose(fh);
 		ret = 1;
-	} 
-	printf("Fail to create config...\nPlease ensure you are admin.\nExit the system!\n");
+	} else {
+		printf("Fail to create config...\nPlease ensure you are admin.\nExit the system!\n");
+	}
+
 	return ret;
 }
 
@@ -1039,9 +1041,9 @@ int main(int argc, char *argv[])
 	if (!private_file_exists) {
 		printf("This is your first time to use this system, please register...\nUsername: ");
 		scanf("%s", username);
-		if (!make_my_config()) {
+		if (make_my_config() == 0) {
 			return -1;
-		};
+		}
 	}
 	
 	printf("Welcome %s!\n", username);
