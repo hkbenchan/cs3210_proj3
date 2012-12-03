@@ -25,6 +25,7 @@ Author: Ho Pan Chan, Robert Harrison
 #include <limits.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
 #endif
@@ -469,7 +470,7 @@ int ypfs_utimens(const char *path, const struct timespec tv[2])
  	//     path, ubuf);
  	ypfs_fullpath(fpath, path);
  	    
- 	ret = utime(fpath, ubuf);
+ 	ret = utimes(fpath, tv);
  	if (ret < 0)
  		ret = -errno
 	
@@ -799,7 +800,7 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
     //     
     dp = opendir(fpath);
     if (dp == NULL)
-     	ret = -errmp;
+     	ret = -errno;
     
     fi->fh = (intptr_t) dp;
         
@@ -918,7 +919,8 @@ int ypfs_access(const char *path, int mask)
 	ret = access(fpath, mask);
 	//     
 	if (ret < 0)
-		ret = -errno
+		ret = -errno;
+		
     return ret;
 }
 
