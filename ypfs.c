@@ -33,7 +33,7 @@ Author: Ho Pan Chan, Robert Harrison
 #define SERCET_LOCATION "/tmp/ypfs/.config"
 #define MAX_PATH_LENGTH 500
 
-#define CURRENT_SESSION (struct ypfs_session *) fuse_get_context()->private_data
+#define CURRENT_SESSION ((struct ypfs_session *) fuse_get_context()->private_data)
 
 struct ypfs_session {
 	char username[30];
