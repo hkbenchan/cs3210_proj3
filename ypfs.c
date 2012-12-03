@@ -627,7 +627,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	FSLog("release");
 	FSLog(path);
 	
-	
+	ret = close(fi->fh);
 	
 	return ret;
 }
@@ -904,7 +904,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	FSLog(fpath);
 	
 	fd = -1;
-	//fd = creat(fpath, mode);
+	fd = creat(fpath, mode);
 	
 	if (fd < 0)
 		ret = -errno;
