@@ -797,8 +797,10 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
     ypfs_fullpath(fpath, path);
     //     
     dp = opendir(fpath);
-    if (dp == NULL)
-     	ret = -errno;
+    if (dp == NULL) {
+		ret = -errno;
+		FSLog("dp null");
+	}
     
     fi->fh = (intptr_t) dp;
         

@@ -14,6 +14,9 @@ mount: ypfs
 unmount:
 	-fusermount -u temp/
 
+update:
+	git pull && make ypfs
+
 clean:
 	rm -f *.o
 	rm -f $(targets)
