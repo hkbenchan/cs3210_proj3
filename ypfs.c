@@ -135,6 +135,7 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 {
     int res = 0;
 	FSLog("getattr");
+	FSLog(path);
     memset(stbuf, 0, sizeof(struct stat));
     if(strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0777;
@@ -894,8 +895,19 @@ int ypfs_access(const char *path, int mask)
 int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
     int ret = 0;
- 	//    char fpath[PATH_MAX];
- 	//     int fd;
+ 	char fpath[PATH_MAX];
+ 	int fd;
+
+	FSLog("Create");
+	FSLog(path);
+	ypfs_fullpath(fpath, path);
+	FSLog(fpath);
+	
+	fd = creat(fpath, mode);
+	if (fd < 0)
+		ret = -errno;
+
+	fi->fh = fd;
  	//     
  	//     log_msg("\nbb_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n",
  	//     path, mode, fi);
@@ -909,7 +921,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
  	//     
  	//     log_fi(fi);
 
-	FSLog("Create");
+	
     return ret;
 }
 
@@ -1085,7 +1097,7 @@ int main(int argc, char *argv[])
 	}
 	
 	ypfs_data->mount_point = realpath(argv[1], NULL);
-	printf("Your mount point: %s\n", ypfs_data->mount_point);
+	//printf("Your mount point: %s\n", ypfs_data->mount_point);
 	printf("Welcome %s!\n", username);
 	
 	strcpy(ypfs_data->username ,username);
