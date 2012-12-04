@@ -981,7 +981,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 			num_slashes++;
 	}
 	
-	if (num_slashes > 2 || strstr(path, "/ypfs") == NULL) {
+	if (num_slashes > 1 || strstr(path, "/ypfs")) {
 		return -1;
 	}
 
@@ -993,7 +993,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	create_node_from_path(path, YP_PIC, NULL);
 	FSLog("creat");
 	fd = creat(fpath, mode);
-	
+	FSLog("creat pass");
 	if (fd < 0)
 		return -errno;
 		
