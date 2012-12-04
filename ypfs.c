@@ -1196,9 +1196,8 @@ static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
 	   by default internally */ 
 	retcode = fread(ptr, size, nmemb, stream);
     nread = (curl_off_t)retcode;
- 
-  	fprintf(stderr, "*** We read %" CURL_FORMAT_CURL_OFF_T
-	        " bytes from file\n", nread);
+    
+  	fprintf(stderr, "*** We read %d bytes from file\n", nread);
  
 	return retcode;
 }
