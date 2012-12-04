@@ -885,6 +885,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			}
 			// in root
 			if (num_slashes == 1) {
+				FSLog("Inside num_slashes");
 				struct stat sb;
 				struct tm * pic_time;
 				
@@ -892,6 +893,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				        perror("stat");
 				        exit(EXIT_FAILURE);
 				}
+				FSLog("Pass fstat");
 				
 				pic_time = localtime(&sb.st_ctime);
 				strftime(year, 1024, "%Y", pic_time);
