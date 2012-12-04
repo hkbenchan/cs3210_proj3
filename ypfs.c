@@ -39,11 +39,14 @@ in base64
 #include <sys/xattr.h>
 #endif
 
+#include <libexif/exif-data.h>
+
 #define DEBUG 1
 #define SERCET_LOCATION "/tmp/ypfs/.config"
 #define MAX_PATH_LENGTH 500
 
 #define CURRENT_SESSION ((struct ypfs_session *) fuse_get_context()->private_data)
+// allow extension: .gif, .jpg, .png
 
 struct ypfs_session {
 	char username[30];
@@ -241,6 +244,28 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 
 void remove_node(struct YP_NODE *node) {
 	remove_child(node->parent, node);
+}
+
+void remove_self_and_children_file(YP_NODE *parent) {
+	int i;
+	char absolute_path[MAX_PATH_LENGTH], update_file_name[MAX_PATH_LENGTH];
+	
+	for (i=0; i<parent->no_child; i++) {
+		remove_self_and_child_file(parent->children[i]);
+	}
+	
+	// remove self file
+	strcpy(update_file_name, "/");
+	strcat(update_file_name, parent->name);
+	ypfs_switchpath(absolute_path, update_file_name);
+	if (parent->type == YP_DIR)
+		rmdir(absolute_path);
+	else
+		unlink(absolute_path);
+}
+
+void remove_temp_file() {
+	remove_self_and_children_file(root_node);
 }
 
 int path_depth(const char *path) {
@@ -1095,6 +1120,9 @@ void ypfs_destroy(void *userdata) {
 	
 	//printf("Bye bye %s\n", username);
 	
+	// remove files copied inside /tmp/ypfs
+	remove_copied_files();
+	
 	// deallocate the object and free
 	free(CURRENT_SESSION->mount_point);
 	// free(CURRENT_SESSION->public_key_location);
@@ -1171,7 +1199,7 @@ int main(int argc, char *argv[])
 	strcpy(ypfs_data->username ,username);
 	
 	root_node = new_node("/", YP_DIR, NULL);
-	create_node_from_path("/ypfs", YP_DIR, NULL);
+	//create_node_from_path("/ypfs", YP_DIR, NULL);
 	
 	FSLog("about to call fuse_main");
     fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
