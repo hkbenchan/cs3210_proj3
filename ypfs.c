@@ -283,19 +283,19 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 	if (*path == '/')
 		path++;
 
-	i = 0;
-	
 	// find the name
-	while(*path && *path != '/' && ( ext == NULL || path < ext-1 || !skip_ext)) {
+	while(*path && *path != '/' && ( ext == NULL || path < ext-1 || (skip_ext == 0))) {
 		name[i] = *(path++);
 		i++;
 	}
 	name[i] = '\0';
 
-	if (*path == '\0')
+	if (*path == '\0') {
 		last_node = 1;
-
+		FSLog("Last node");
+	}
 	if (i == 0) {
+		FSLog("return cur");
 		return cur;
 	}
 
@@ -305,7 +305,7 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 		ext = str_c((cur->children[i])->name, '.');
 		curr_char = (cur->children[i])->name;
 		n = 0;
-		while(*curr_char != '\0' && (ext == NULL || !skip_ext || curr_char < ext-1)) {
+		while(*curr_char != '\0' && (ext == NULL || (skip_ext == 0) || curr_char < ext-1)) {
 			compare_name[n] = *(curr_char++);
 			n++;
 		}
