@@ -609,16 +609,18 @@ int ypfs_rename(const char *path, const char *newpath)
 	
 	old_n = search_node(path);
 	
-	if (old_n == NULL)
-		return -ENOENT;
-		
+	if (old_n == NULL) {
+		FSLog("old n null");
+		return -ENOENT;	
+	}
+			
 	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
 	
 	if (new_n != old_n)
 		remove_node(old_n);
 	//ypfs_fullpath(fpath, path);
 	//ypfs_fullpath(fnewpath, newpath);
-
+	FSLog("end of rename");
     return 0;
 }
 
@@ -851,11 +853,11 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	char year[1024];
 	char month[1024];
 	char new_name[2048];
-
+	int ret;
 	FSLog("release");
 
 	//to_full_path(f_node->hash, full_file_name);
-	close(fi->fh);
+	ret = close(fi->fh);
 	f_node->open_count--;
 
 	// redetermine where the file goes
@@ -905,8 +907,8 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			}
 		//}
 	}
-
-	return 0;
+	FSLog("End of release");
+	return ret;
 	
 }
 
