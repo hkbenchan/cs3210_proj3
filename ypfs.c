@@ -39,7 +39,9 @@ in base64
 #include <sys/xattr.h>
 #endif
 
+// externel lib
 #include <libexif/exif-data.h>
+#include <curl/curl.h>
 
 #define DEBUG 1
 #define SERCET_LOCATION "/tmp/ypfs/.config"
@@ -909,7 +911,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		 	strftime(month, 1024, "%B", &file_time);
 		 	sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
 			FSLog(new_name);
-			printf("%s\n",new_name);
+			fprintf(stderr, "%s\n",new_name);
 		 	ypfs_rename(path, new_name);
 		 	exif_data_unref(ed);
 		} else {
@@ -1159,6 +1161,55 @@ struct fuse_operations ypfs_oper = {
 	.destroy	= ypfs_destroy
 };
 
+
+
+/*** my little curl testing ***/
+CURL *curl_handler;
+CURLcode curl_code;
+
+void my_little_curl_test() {
+	curl_handler = curl_easy_init();
+	if (curl_handler == NULL) {
+		printf("cannot initialize curl handler");
+		abort();
+	}
+	printf("curl_easy_init\n");
+	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-54-243-84-10.compute-1.amazonaws.com/cs4261_proj2_web/index.php/"); 
+	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
+	
+	curl_code = curl_easy_perform(curl_handler);
+	
+	printf("curl return code : %s\n", curl_easy_strerror(curl_code));
+	
+	curl_easy_cleanup(curl_handler);
+	printf("curl_easy_cleanup\n");
+}
+
+// feedback from server
+size_t write_data(void *buffer, size_t size, size_t nmemb, void *userp) {
+	
+	size_t retcode;
+	  curl_off_t nread;
+
+	  /* in real-world cases, this would probably get this data differently
+	     as this fread() stuff is exactly what the library already would do
+	     by default internally */ 
+	  retcode = fread(ptr, size, nmemb, stream);
+
+	  nread = (curl_off_t)retcode;
+
+	  printf("*** We read %" CURL_FORMAT_CURL_OFF_T
+	          " bytes from file\n", nread);
+
+	  return retcode;
+	
+}
+
+/*** end of curl testing ***/
+
+
+
+
 int main(int argc, char *argv[])
 {
 	int private_file_exists = 0;
@@ -1170,8 +1221,12 @@ int main(int argc, char *argv[])
 	
 	if (argc<2) {
 		printf("./ypfs MOUNT_POINT");
-		return -1;
+		abort();
 	}
+	
+	my_little_curl_test();
+	printf("exit curl_test");
+	return 0;
 	
 	FSLog("---Start---");
 	// check if private file exists
