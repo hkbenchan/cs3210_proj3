@@ -669,7 +669,7 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	FSLog("open");
 	FSLog(path);
 	ypfs_fullpath(fpath, path);
-	
+	FSLog(fpath);
 	my_node = search_node_no_extension(path);
 	
 	if (my_node == NULL) {
@@ -680,7 +680,8 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	if (strcmp( strstr(path, "."), strstr(my_node->name, ".") ) != 0) {
 		strcat(fpath, strstr(path, "."));
 	}
-	
+	FSLog(fpath);
+	FSLog("Before real open");
 	fd = open(fpath, fi->flags, 0666);
 	if (fd < 0) {
 		ret = -errno;
