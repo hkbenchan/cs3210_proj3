@@ -154,7 +154,7 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
 	
 	if (type == YP_PIC && hash == NULL) {
 		my_new_node->hash = malloc(sizeof(char) * 50);
-		sprintf(my_new_node->hash, "%lld", random() % 10000000000);
+		sprintf(my_new_node->hash, "%ld", random() % 10000000000);
 	} else if (type == YP_DIR && hash) {
 		my_new_node->hash = malloc(sizeof(char) * 50);
 		sprintf(my_new_node->hash, "%s", hash);
@@ -199,7 +199,7 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 	
 	if (parent == NULL) {
 		FSLog("Remove child to a null parent");
-		return NULL;
+		return ;
 	}
 	
 	tmp_child_list = parent->children;
@@ -712,7 +712,7 @@ int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
 	struct YP_NODE *my_node;
 	FSLog("read");
 	
-	my_node = node_path_no_extension(path);
+	my_node = search_node_no_extension(path);
 	
 	if (my_node == NULL)
 		return -ENOENT;
@@ -863,7 +863,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				pic_time = localtime(&sb.st_ctime);
 				strftime(year, 1024, "%Y", pic_time);
 				strftime(month, 1024, "%B", pic_time);
-				sprintf(new_name, "/%s/%s/%s", year, month, file_node->name);
+				sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
 				FSLog(new_name);
 				ypfs_rename(path, new_name);
 
@@ -901,7 +901,7 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
 {
     
     int ret = -1;
-	struct YP_NODE *my_node = search_path(path);
+	struct YP_NODE *my_node = search_node(path);
 	//DIR *dp;
     char fpath[MAX_PATH_LENGTH];
 	FSLog("opendir");
@@ -975,7 +975,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 
 	FSLog("Create test pass");
 	
-	my_node = new_node(end, YP_PIC, NULL);
+	my_node = new_node(filename, YP_PIC, NULL);
 	if (my_node != NULL)
 		add_child(root_node, my_node);
 
