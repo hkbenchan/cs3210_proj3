@@ -34,6 +34,7 @@ in base64
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
 #endif
