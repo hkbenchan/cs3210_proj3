@@ -1191,7 +1191,7 @@ void my_little_curl_test() {
 		abort();
 	}
 	printf("curl_easy_init\n");
-	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-54-243-84-10.compute-1.amazonaws.com/cs4261_proj2_web/index.php/register.json");
+	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-54-243-84-10.compute-1.amazonaws.com/cs4261_proj2_web/index.php/register/index.json");
 	curl_easy_setopt(curl_handler, CURLOPT_POSTFIELDS, "Username=abcdefg"); 
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, read_callback); 
