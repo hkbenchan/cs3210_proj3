@@ -1020,6 +1020,8 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 		FSLog("fd fail");
 		return -errno;
 	}
+	
+	fi->fh = fd;
 	// 		
 	// 	fi->fh = fd;
 	// 	
