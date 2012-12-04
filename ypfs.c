@@ -685,7 +685,7 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	if (fi == NULL) {
 		FSLog("FI is NULL");
 	}
-	fd = open(fpath, fi->flags);
+	fd = open(fpath, fi->flags, 0666);
 	if (fd < 0) {
 		ret = -errno;
 		FSLog("Fail in fd open");
