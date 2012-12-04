@@ -680,7 +680,7 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 		strcat(fpath, strstr(my_node->name, "."));
 	}
 	
-	fd = open(fpath, fi->flags);
+	fd = open(fpath, fi->flags, 0666);
 	if (fd < 0)
 		ret = -errno;
 	
