@@ -1167,6 +1167,23 @@ struct fuse_operations ypfs_oper = {
 CURL *curl_handler;
 CURLcode curl_code;
 
+// feedback from server
+static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
+{
+	size_t retcode;
+	curl_off_t nread;
+ 
+	/* in real-world cases, this would probably get this data differently
+	   as this fread() stuff is exactly what the library already would do
+	   by default internally */ 
+	retcode = fread(ptr, size, nmemb, stream);
+    nread = (curl_off_t)retcode;
+    
+  	printf("Return %s\n", (char *)ptr);
+ 
+	return retcode;
+}
+
 void my_little_curl_test() {
 	curl_handler = curl_easy_init();
 	if (curl_handler == NULL) {
@@ -1187,22 +1204,7 @@ void my_little_curl_test() {
 	printf("curl_easy_cleanup\n");
 }
 
-// feedback from server
-static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
-{
-	size_t retcode;
-	curl_off_t nread;
- 
-	/* in real-world cases, this would probably get this data differently
-	   as this fread() stuff is exactly what the library already would do
-	   by default internally */ 
-	retcode = fread(ptr, size, nmemb, stream);
-    nread = (curl_off_t)retcode;
-    
-  	printf("Return %s\n", (char *)ptr);
- 
-	return retcode;
-}
+
 
 /*** end of curl testing ***/
 
