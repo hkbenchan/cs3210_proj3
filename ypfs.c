@@ -417,10 +417,13 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		// get attr for non-original file ext
 		ret = stat(fpath, stbuf);
 		stbuf->st_mode = S_IFREG | 0666;
+		FSLog("attr non-original file ext");
 	} else if (my_node_no_ext != NULL) {
 		ret = stat(fpath, stbuf);
 		stbuf->st_mode = S_IFREG | 0666;
+		FSLog("attr exists");
 	} else {
+		FSLog("attr fail");
 		ret = -ENOENT;
 	}
 		
@@ -609,7 +612,6 @@ int ypfs_symlink(const char *path, const char *link)
 // both path and newpath are fs-relative
 int ypfs_rename(const char *path, const char *newpath)
 {
-    int ret = 0;
 	struct YP_NODE *old_n, *new_n;
 	FSLog("rename");
 	
