@@ -168,7 +168,9 @@ void Encrypt(uchar *in, uchar *out)
         AES_set_encrypt_key(ckey, 256, &encryptKey);
         firstRun = 0;
     }
-
+	
+	printf("ENCRY KEY: %s\n", encrypyKey);
+	
     AES_ecb_encrypt(in, out, &encryptKey, AES_ENCRYPT);
 
 }
