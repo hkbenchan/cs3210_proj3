@@ -57,8 +57,8 @@ struct YP_NODE {
 	char *name;
 	char *hash; // unique name
 	YP_TYPE type;
-	struct struct YP_NODE ** children;
-	struct struct YP_NODE* parent;
+	struct YP_NODE ** children;
+	struct YP_NODE* parent;
 	int no_child;
 	int open_count;
 };
