@@ -1200,11 +1200,6 @@ void my_little_curl_test() {
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
 	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, read_callback); 
 	
-	
-	
-	/* add null character into htmlbuffer, to demonstrate that transfers of buffers containing null characters actually work  */  
-	htmlbuffer[8] = '\0';
-
 	/* Add simple name/content section */
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, "testing people", CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, "this_is_a_password", CURLFORM_END);
@@ -1212,7 +1207,7 @@ void my_little_curl_test() {
 	//headerlist = curl_slist_append(headerlist, buf);
 
 	/* Set the form info */
-	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+	curl_easy_setopt(curl_handler, CURLOPT_HTTPPOST, post);
 	
 	curl_code = curl_easy_perform(curl_handler);
 	
