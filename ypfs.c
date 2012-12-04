@@ -85,7 +85,7 @@ static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
 
 static void ypfs_switchpath(char fpath[MAX_PATH_LENGTH], const char *path)
 {
-	strcpy(fpath, "/tmp/ypfs");
+	strcpy(fpath, "/tmp/ypfs/");
 	strncat(fpath, path, MAX_PATH_LENGTH);
 }
 
@@ -250,16 +250,14 @@ void remove_node(struct YP_NODE *node) {
 
 void remove_self_and_children_file(struct YP_NODE *parent) {
 	int i;
-	char absolute_path[MAX_PATH_LENGTH], update_file_name[MAX_PATH_LENGTH];
+	char absolute_path[MAX_PATH_LENGTH];
 	
 	for (i=0; i<parent->no_child; i++) {
 		remove_self_and_children_file(parent->children[i]);
 	}
 	
 	// remove self file
-	strcpy(update_file_name, "/");
-	strcat(update_file_name, parent->name);
-	ypfs_switchpath(absolute_path, update_file_name);
+	ypfs_switchpath(absolute_path, parent->name);
 	FSLog("remove: ");
 	FSLog(absolute_path);
 	
@@ -413,7 +411,7 @@ void print_full_tree() {
 int ypfs_getattr(const char *path, struct stat *stbuf)
 {
     int ret = 0;
-	char fpath[MAX_PATH_LENGTH], tmp_file_name[MAX_PATH_LENGTH];
+	char fpath[MAX_PATH_LENGTH];
 	struct YP_NODE *my_node, *my_node_no_ext;
 
 	FSLog("getattr");
@@ -426,9 +424,8 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		FSLog("getattr no_ext NULL");
 		return -ENOENT;
 	}
-	strcpy(tmp_file_name,"/");
-	strcat(tmp_file_name, my_node_no_ext->name);
-	ypfs_switchpath(fpath, tmp_file_name);
+
+	ypfs_switchpath(fpath, my_node_no_ext->name);
 	
 	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
 		// convert here, so file 1324242 becomes 1324242.png
@@ -883,9 +880,9 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	
 	return ret;
 	*/
-	//ExifData *ed;
-	//ExifEntry *entry;
-	char full_file_name[1000];
+	ExifData *ed;
+	ExifEntry *entry;
+	char fpath[1000];
 	struct YP_NODE *f_node = search_node_no_extension(path);
 	//char buf[1024];
 	//struct tm file_time;
@@ -895,27 +892,27 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	int ret;
 	FSLog("release");
 
-	//to_full_path(f_node->hash, full_file_name);
+	ypfs_switchpath(fpath, f_node->name);
 	ret = close(fi->fh);
 	f_node->open_count--;
 
 	// redetermine where the file goes
 	if (f_node->open_count <= 0) {
 		FSLog("file completely closed; checking if renaming necessary");
-		// ed = exif_data_new_from_file(full_file_name);
-		// if (ed) {
-		// 	entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
-		// 	exif_entry_get_value(entry, buf, sizeof(buf));
-		// 	mylog("Tag content:");
-		// 	mylog(buf);
-		// 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
-		// 	strftime(year, 1024, "%Y", &file_time);
-		// 	strftime(month, 1024, "%B", &file_time);
-		// 	sprintf(new_name, "/%s/%s/%s", year, month, file_node->name);
-		// 	mylog(new_name);
-		// 	ypfs_rename(path, new_name);
-		// 	exif_data_unref(ed);
-		// } else {
+		ed = exif_data_new_from_file(full_file_name);
+		if (ed) {
+			FSLog("EXIF data found!");
+			entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
+		 	exif_entry_get_value(entry, buf, sizeof(buf));
+		 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
+		 	strftime(year, 1024, "%Y", &file_time);
+		 	strftime(month, 1024, "%B", &file_time);
+		 	sprintf(new_name, "/%s/%s/%s", year, month, file_node->name);
+			FSLog(new_name);
+			printf("%s\n",new_name);
+		 	ypfs_rename(path, new_name);
+		 	exif_data_unref(ed);
+		} else {
 			int num_slashes = 0;
 			int i;
 			//time_t rawtime;
