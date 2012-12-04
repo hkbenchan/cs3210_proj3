@@ -884,8 +884,8 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	ExifEntry *entry;
 	char fpath[1000];
 	struct YP_NODE *f_node = search_node_no_extension(path);
-	//char buf[1024];
-	//struct tm file_time;
+	char buf[1024];
+	struct tm file_time;
 	char year[1024];
 	char month[1024];
 	char new_name[2048];
@@ -899,7 +899,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	// redetermine where the file goes
 	if (f_node->open_count <= 0) {
 		FSLog("file completely closed; checking if renaming necessary");
-		ed = exif_data_new_from_file(full_file_name);
+		ed = exif_data_new_from_file(fpath);
 		if (ed) {
 			FSLog("EXIF data found!");
 			entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
