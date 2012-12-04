@@ -345,7 +345,7 @@ void print_tree(struct YP_NODE* head, const char *pre) {
 	sprintf(preN, "%s-", pre);
 	sprintf(path_name, "%s%s", preN, head->name);
 	FSLog(path_name);
-	for (int i=0; i<head->no_child; i++) {
+	for (i=0; i<head->no_child; i++) {
 		print_tree(head->children[i], preN);
 	}
 	
@@ -355,7 +355,7 @@ void print_full_tree() {
 	int i;
 	FSLog("Print tree");
 	FSLog(root_node->name);
-	for (int i=0; i<root_node->no_child; i++) {
+	for (i=0; i<root_node->no_child; i++) {
 		print_tree(root_node->children[i], "-");
 	}
 	FSLog("End of Print");
