@@ -1214,7 +1214,7 @@ void my_little_curl_test() {
 	
 	curl_easy_getinfo (curl_handler, CURLINFO_RESPONSE_CODE, &http_code);
 	if (curl_code != CURLE_ABORTED_BY_CALLBACK) {
-		printf("curl http code: %d\n", http_code);
+		printf("curl http code: %ld\n", http_code);
 	} else {
 		printf("curl abort by callback\n");
 	}
