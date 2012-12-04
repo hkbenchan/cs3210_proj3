@@ -1276,9 +1276,9 @@ int main(int argc, char *argv[])
 	uchar in[2 * AES_BLOCK_SIZE] = "helloworld1234\nhelloworld1234\n";
 	uchar out[2 * AES_BLOCK_SIZE];
 	
-	Encrypt32(in, out);
+	Encrypt(in, out);
 	printf("out: %s\n", out);
-	Decrypt32(out, in);
+	Decrypt(out, in);
 	
 	//return 0;
 	
