@@ -269,7 +269,7 @@ void remove_self_and_children_file(struct YP_NODE *parent) {
 		unlink(absolute_path);
 }
 
-void remove_copied_file() {
+void remove_copied_files() {
 	FSLog("Start removing...");
 	remove_self_and_children_file(root_node);
 	FSLog("Finish removing...");
