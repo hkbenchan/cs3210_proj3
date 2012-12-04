@@ -907,7 +907,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
 		 	strftime(year, 1024, "%Y", &file_time);
 		 	strftime(month, 1024, "%B", &file_time);
-		 	sprintf(new_name, "/%s/%s/%s", year, month, fnode->name);
+		 	sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
 			FSLog(new_name);
 			printf("%s\n",new_name);
 		 	ypfs_rename(path, new_name);
