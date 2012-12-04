@@ -1188,6 +1188,7 @@ static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *stream)
 void my_little_curl_test() {
 	struct curl_httppost* post = NULL;  
 	struct curl_httppost* last = NULL;  
+	long http_code = 0;
 	//struct curl_slist *headerlist=NULL;
 	
 	curl_handler = curl_easy_init();
@@ -1211,7 +1212,14 @@ void my_little_curl_test() {
 	
 	curl_code = curl_easy_perform(curl_handler);
 	
-	printf("curl return code : %s\n", curl_easy_strerror(curl_code));
+	curl_easy_getinfo (curl_handler, CURLINFO_RESPONSE_CODE, &http_code);
+	if (curl_code != CURLE_ABORTED_BY_CALLBACK) {
+		printf("curl http code: %d\n", http_code);
+	} else {
+		printf("curl abort by callback\n");
+	}
+
+	//printf("curl return code : %s\n", curl_easy_strerror(curl_code));
 	curl_formfree(post);
 	curl_easy_cleanup(curl_handler);
 	printf("curl_easy_cleanup\n");
