@@ -141,7 +141,7 @@ int make_my_config()
 }
 
 struct YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
-	struct YP_NODE *my_new_node = malloc(sizeof(struct struct YP_NODE));
+	struct YP_NODE *my_new_node = malloc(sizeof(struct YP_NODE));
 	
 	my_new_node->name = malloc(sizeof(char) * (strlen(path) + 1));
 	strcpy(my_new_node->name, path);
@@ -154,7 +154,7 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
 	
 	if (type == YP_PIC && hash == NULL) {
 		my_new_node->hash = malloc(sizeof(char) * 50);
-		sprintf(my_new_node->hash, "%lld", random() % 1000000000);
+		sprintf(my_new_node->hash, "%lld", random() % 10000000000);
 	} else if (type == YP_DIR && hash) {
 		my_new_node->hash = malloc(sizeof(char) * 50);
 		sprintf(my_new_node->hash, "%s", hash);
@@ -163,7 +163,7 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
 	return my_new_node;
 }
 
-struct YP_NODE* add_child(struct YP_NODE* parent, struct YP_NODE* child) {
+struct YP_NODE* add_child(struct YP_NODE *parent, struct YP_NODE *child) {
 	struct YP_NODE** tmp_child_list;
 	int tmp_no_child;
 	int i;
@@ -176,7 +176,7 @@ struct YP_NODE* add_child(struct YP_NODE* parent, struct YP_NODE* child) {
 	tmp_child_list = parent->children;
 	tmp_no_child = parent->no_child;
 	
-	parent->children = malloc((tmp_no_child+1)*sizeof(struct struct YP_NODE*));
+	parent->children = malloc((tmp_no_child+1)*sizeof(struct YP_NODE*));
 	
 	for (i=0; i<tmp_no_child; i++) {
 		(parent->children)[i] = tmp_child_list[i];
@@ -207,31 +207,30 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 	
 	if (tmp_no_child < 1) {
 		FSLog("Parent has no child");
-		return ;
-	}
-	
-	parent->children = malloc((tmp_no_child-1)*sizeof(struct struct YP_NODE*));
-	
-	for (i=0; i<tmp_no_child; i++) {
-		if (tmp_child_list[i] != child) {
-			(parent->children)[active] = tmp_child_list[i];
-			active++;
+	} else {
+		parent->children = malloc((tmp_no_child-1)*sizeof(struct YP_NODE*));
+
+		for (i=0; i<tmp_no_child; i++) {
+			if (tmp_child_list[i] != child) {
+				(parent->children)[active] = tmp_child_list[i];
+				active++;
+			}
 		}
+
+		parent->no_child = tmp_no_child-1;
+
+		free(tmp_child_list);
+
+		if (child->name)
+			free(child->name);
+
+		if (child->hash)
+			free(child->hash);
+
+		if (child)
+			free(child);
 	}
-	
-	parent->no_child = tmp_no_child-1;
-	
-	free(tmp_child_list);
-	
-	if (child->name)
-		free(child->name);
-	
-	if (child->hash)
-		free(child->hash);
-	
-	if (child)
-		free(child);
-	
+		
 }
 
 void remove_node(struct YP_NODE *node) {
@@ -263,20 +262,20 @@ char* str_c(const char* path, char after)
 
 
 
-struct YP_NODE node_resolver(const char *path, struct YP_NODE *cur, int create, YP_TYPE type, char *hash, int skip_ext)
+struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create, YP_TYPE type, char *hash, int skip_ext)
 {
-	char name[PATH_MAX_LENGTH];
+	char name[MAX_PATH_LENGTH];
 	int i = 0;
 	int last_node = 0;
 	char *ext;
-	char compare_name[PATH_MAX_LENGTH];
+	char compare_name[MAX_PATH_LENGTH];
 	char *curr_char;
 	int n = 0;
 
 	if (cur == NULL)
 		FSLog("node for path: NULL cur");
 
-	ext = str_c(path, ".");
+	ext = str_c(path, '.');
 
 	if (*path == '/')
 		path++;
@@ -294,7 +293,7 @@ struct YP_NODE node_resolver(const char *path, struct YP_NODE *cur, int create, 
 		last_node = 1;
 
 	if (i == 0) {
-		return curr;
+		return cur;
 	}
 
 	for (i = 0; i < cur->no_child; i++) {
@@ -309,29 +308,29 @@ struct YP_NODE node_resolver(const char *path, struct YP_NODE *cur, int create, 
 		}
 		compare_name[n] = '\0';
 		if (strcmp(name, compare_name) == 0)
-			return node_resolver(path, curr->children[i], create, type, hash, ignore_ext); // search it inside this child
+			return node_resolver(path, cur->children[i], create, type, hash, skip_ext); // search it inside this child
 		*compare_name = '\0';
 	}
 
 
 	if (create == 1) {
 		// add a child to cur and continue the process
-		return node_resolver(path, add_child(curr, init_node(name, last_node == 1 ? type : NODE_DIR, hash)), create, type, hash, skip_ext);
+		return node_resolver(path, add_child(cur, new_node(name, last_node == 1 ? type : YP_DIR, hash)), create, type, hash, skip_ext);
 	}
 
 	return NULL;
 }
 
 
-struct YP_NODE *search_node(const char *path) {
+struct YP_NODE* search_node(const char *path) {
 	return node_resolver((char *)path, root_node, 0, 0, NULL, 0);
 }
 
-struct YP_NODE *search_node_no_extension(const char *path) {
+struct YP_NODE* search_node_no_extension(const char *path) {
 	return node_resolver((char *)path, root_node, 0, 0, NULL, 1);
 }
 
-struct YP_NODE *create_node_from_path(const char *path, YP_TYPE type, char *hash) {
+struct YP_NODE* create_node_from_path(const char *path, YP_TYPE type, char *hash) {
 	return node_resolver((char *)path, root_node, 1, type, hash, 1);
 }
 
@@ -668,7 +667,7 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	FSLog(path);
 	ypfs_fullpath(fpath, path);
 	
-	my_node = node_path_no_extension(path);
+	my_node = search_node_no_extension(path);
 	
 	if (my_node != NULL) {
 		return -ENOENT;
@@ -814,21 +813,21 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	//ExifEntry *entry;
 	char full_file_name[1000];
 	struct YP_NODE *f_node = search_node_no_extension(path);
-	char buf[1024];
-	struct tm file_time;
+	//char buf[1024];
+	//struct tm file_time;
 	char year[1024];
 	char month[1024];
 	char new_name[2048];
 
-	mylog("release");
+	FSLog("release");
 
-	to_full_path(f_node->hash, full_file_name);
+	//to_full_path(f_node->hash, full_file_name);
 	close(fi->fh);
 	f_node->open_count--;
 
 	// redetermine where the file goes
-	if (file_node->open_count <= 0) {
-		FSlog("file completely closed; checking if renaming necessary");
+	if (f_node->open_count <= 0) {
+		FSLog("file completely closed; checking if renaming necessary");
 		// ed = exif_data_new_from_file(full_file_name);
 		// if (ed) {
 		// 	entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
@@ -845,7 +844,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		// } else {
 			int num_slashes = 0;
 			int i;
-			time_t rawtime;
+			//time_t rawtime;
 
 			for (i = 0; i < strlen(path); i++) {
 				if (path[i] == '/')
@@ -902,8 +901,8 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
 {
     
     int ret = -1;
-	struct YP_NODE *my_node = node_for_path(path);
-	DIR *dp;
+	struct YP_NODE *my_node = search_path(path);
+	//DIR *dp;
     char fpath[MAX_PATH_LENGTH];
 	FSLog("opendir");
 	FSLog(path);
@@ -961,27 +960,24 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	ypfs_fullpath(fpath, path);
 	FSLog(fpath);
 	
-	while(*end != '\0') end++;
-	while(*end != '/' && end >= path) end--;
-	if (*end == '/') end++;
+	while(*filename != '\0') filename++;
+	while(*filename != '/' && filename >= path) filename--;
+	if (*filename == '/') filename++;
 	
 	for (i = 0; i< strlen(path); i++) {
 		if (path[i] == '/')
 			num_slashes++;
 	}
 	
-	if (num_slashes > 2 || strstr(path, "/ypfs")) {
+	if (num_slashes > 1 || strstr(path, "/ypfs") == NULL) {
 		return -1;
 	}
 
 	FSLog("Create test pass");
 	
-	my_node = new_node(end, NODE_FILE, NULL);
-	add_child(root, new_node);
-
-	//fd = creat(fpath, mode);
-	//FSLog("Create end");
-
+	my_node = new_node(end, YP_PIC, NULL);
+	if (my_node != NULL)
+		add_child(root_node, my_node);
 
 /*
 
