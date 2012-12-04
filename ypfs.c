@@ -253,7 +253,7 @@ void remove_self_and_children_file(struct YP_NODE *parent) {
 	char absolute_path[MAX_PATH_LENGTH], update_file_name[MAX_PATH_LENGTH];
 	
 	for (i=0; i<parent->no_child; i++) {
-		remove_self_and_child_file(parent->children[i]);
+		remove_self_and_children_file(parent->children[i]);
 	}
 	
 	// remove self file
