@@ -42,6 +42,7 @@ in base64
 // externel lib
 #include <libexif/exif-data.h>
 #include <curl/curl.h>
+#include "parson.h" // json package
 
 #define DEBUG 0
 #define SERCET_LOCATION "/tmp/ypfs/.config"
@@ -1168,7 +1169,7 @@ CURL *curl_handler;
 CURLcode curl_code;
 
 // feedback from server
-static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
+static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *stream)
 {
 	size_t retcode;
 	curl_off_t nread;
@@ -1179,28 +1180,44 @@ static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
 	retcode = fread(ptr, size, nmemb, stream);
     nread = (curl_off_t)retcode;
     
-  	printf("Return %s\n", (char *)ptr);
+  	printf("Return %s\n", ptr);
  
 	return retcode;
 }
 
 void my_little_curl_test() {
+	struct curl_httppost* post = NULL;  
+	struct curl_httppost* last = NULL;  
+	//struct curl_slist *headerlist=NULL;
+	
 	curl_handler = curl_easy_init();
 	if (curl_handler == NULL) {
 		printf("cannot initialize curl handler");
 		abort();
 	}
 	printf("curl_easy_init\n");
-	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-54-243-84-10.compute-1.amazonaws.com/cs4261_proj2_web/index.php/register/index.json");
-	curl_easy_setopt(curl_handler, CURLOPT_POSTFIELDS, "Username=abcdefg"); 
+	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/register.php");
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
-	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, read_callback); 
+	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, read_callback); 
 	
+	
+	
+	/* add null character into htmlbuffer, to demonstrate that transfers of buffers containing null characters actually work  */  
+	htmlbuffer[8] = '\0';
+
+	/* Add simple name/content section */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, "testing people", CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, "this_is_a_password", CURLFORM_END);
+
+	//headerlist = curl_slist_append(headerlist, buf);
+
+	/* Set the form info */
+	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
 	
 	curl_code = curl_easy_perform(curl_handler);
 	
 	printf("curl return code : %s\n", curl_easy_strerror(curl_code));
-	
+	curl_formfree(post);
 	curl_easy_cleanup(curl_handler);
 	printf("curl_easy_cleanup\n");
 }

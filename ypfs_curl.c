@@ -95,3 +95,61 @@ int ypfs_curl(char *file, char *url)
   curl_global_cleanup();
   return 0;
 }
+
+
+
+void my_fail_method() {
+	
+	struct curl_httppost* post = NULL;  
+	struct curl_httppost* last = NULL;  
+	char namebuffer[] = "name buffer";  
+	long namelength = strlen(namebuffer);  
+	char buffer[] = "test buffer";  
+	char htmlbuffer[] = "<HTML>test buffer</HTML>";  
+	long htmlbufferlength = strlen(htmlbuffer);  
+	struct curl_forms forms[3];  
+	char file1[] = "my-face.jpg";  
+	char file2[] = "your-face.jpg";  
+	/* add null character into htmlbuffer, to demonstrate that transfers of buffers containing null characters actually work  */  
+	htmlbuffer[8] = '\0';
+
+	/* Add simple name/content section */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "name",   CURLFORM_COPYCONTENTS, "content", CURLFORM_END);
+
+	/* Add simple name/content/contenttype section */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "htmlcode", CURLFORM_COPYCONTENTS, "<HTML></HTML>", CURLFORM_CONTENTTYPE, "text/html", CURLFORM_END);
+
+	/* Add name/ptrcontent section */  
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "name_for_ptrcontent",   CURLFORM_PTRCONTENTS, buffer, CURLFORM_END);
+
+	/* Add ptrname/ptrcontent section */
+	curl_formadd(&post, &last, CURLFORM_PTRNAME, namebuffer,   CURLFORM_PTRCONTENTS, buffer, CURLFORM_NAMELENGTH,   namelength, CURLFORM_END);
+
+	/* Add name/ptrcontent/contenttype section */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "html_code_with_hole",   CURLFORM_PTRCONTENTS, htmlbuffer,   CURLFORM_CONTENTSLENGTH, htmlbufferlength,   CURLFORM_CONTENTTYPE, "text/html", CURLFORM_END);
+
+	/* Add simple file section */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "picture",   CURLFORM_FILE, "my-face.jpg", CURLFORM_END);
+
+	/* Add file/contenttype section */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "picture",   CURLFORM_FILE, "my-face.jpg",   CURLFORM_CONTENTTYPE, "image/jpeg", CURLFORM_END);
+
+	/* Add two file section */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "pictures",   CURLFORM_FILE, "my-face.jpg",   CURLFORM_FILE, "your-face.jpg", CURLFORM_END);
+
+	/* Add two file section using CURLFORM_ARRAY */
+	forms[0].option = CURLFORM_FILE;  forms[0].value = file1;  forms[1].option = CURLFORM_FILE;  forms[1].value = file2;  forms[2].option = CURLFORM_END;
+
+	/* Add a buffer to upload */
+	curl_formadd(&post, &last,   CURLFORM_COPYNAME, "name",   CURLFORM_BUFFER, "data",   CURLFORM_BUFFERPTR, record,   CURLFORM_BUFFERLENGTH, record_length,   CURLFORM_END);
+
+	/* no option needed for the end marker */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "pictures",   CURLFORM_ARRAY, forms, CURLFORM_END);
+	
+	/* Add the content of a file as a normal post text value */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "filecontent",   CURLFORM_FILECONTENT, ".bashrc", CURLFORM_END);
+	
+	/* Set the form info */ 
+	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+	
+}
