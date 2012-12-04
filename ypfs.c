@@ -972,7 +972,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 			num_slashes++;
 	}
 	
-	if (num_slashes > 1 || strstr(path, "/ypfs") == NULL) {
+	if (num_slashes > 2 || strstr(path, "/ypfs") == NULL) {
 		return -1;
 	}
 
