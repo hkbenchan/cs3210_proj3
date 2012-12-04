@@ -1277,9 +1277,9 @@ int main(int argc, char *argv[])
 	uchar out[2 * AES_BLOCK_SIZE];
 	
 	Encrypt(in, out);
-	printf("out: %s\n", out);
+	printf("encry: %s\n", out);
 	Decrypt(out, in);
-	
+	printf("decry: %s\n", in);
 	//return 0;
 	
 	if (DEBUG == 0)

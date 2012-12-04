@@ -6,7 +6,7 @@ hello: hello.c
 	gcc -Wall `pkg-config fuse --cflags --libs` hello.c -o hello
 
 ypfs: ypfs.c
-	gcc -Wall `pkg-config fuse libexif --cflags --libs` ypfs.c -o ypfs -lcurl -lopenssl
+	gcc -Wall `pkg-config fuse libexif --cflags --libs` ypfs.c -o ypfs -lcurl -lssl
 
 mount: ypfs
 	./ypfs temp/
