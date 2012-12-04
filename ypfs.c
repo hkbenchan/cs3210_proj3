@@ -663,7 +663,7 @@ int ypfs_utimens(const char *path, const struct timespec tv[2])
  */
 int ypfs_open(const char *path, struct fuse_file_info *fi)
 {
-	int fd, ret = 0;
+	int fd = -1, ret = 0;
 	char fpath[MAX_PATH_LENGTH];
 	struct YP_NODE *my_node;
 	FSLog("open");
@@ -680,12 +680,14 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	if (strcmp( strstr(path, "."), strstr(my_node->name, ".") ) != 0) {
 		strcat(fpath, strstr(path, "."));
 	}
+	
 	FSLog(fpath);
 	FSLog("Before real open");
-	fd = open(fpath, fi->flags, 0666);
+	//fd = open(fpath, fi->flags, 0666);
 	if (fd < 0) {
 		ret = -errno;
 		FSLog("Fail in fd open");
+		return ret;
 	}
     fi->fh = fd;
 
