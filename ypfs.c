@@ -381,7 +381,7 @@ void print_full_tree() {
 int ypfs_getattr(const char *path, struct stat *stbuf)
 {
     int ret = 0;
-	char fpath[MAX_PATH_LENGTH];
+	char fpath[MAX_PATH_LENGTH], tmp_file_name[MAX_PATH_LENGTH];
 	struct YP_NODE *my_node, *my_node_no_ext;
 
 	FSLog("getattr");
@@ -394,8 +394,9 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		FSLog("getattr no_ext NULL");
 		return -ENOENT;
 	}
-	
-	ypfs_switchpath(fpath, my_node_no_ext->name);
+	strcpy(tmp_file_name,"/");
+	strcpy(tmp_file_name, my_node_no_ext->name);
+	ypfs_switchpath(fpath, tmp_file_name);
 	
 	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
 		// convert here, so file 1324242 becomes 1324242.png
