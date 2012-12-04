@@ -273,8 +273,8 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 	char *curr_char;
 	int n = 0;
 
-	FSLog("node_resolver");
-	FSLog(path);
+	// FSLog("node_resolver");
+	// FSLog(path);
 
 	if (cur == NULL)
 		FSLog("node for path: NULL cur");
@@ -293,10 +293,10 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 
 	if (*path == '\0') {
 		last_node = 1;
-		FSLog("Last node");
+		//FSLog("Last node");
 	}
 	if (i == 0) {
-		FSLog("return cur");
+		//FSLog("return cur");
 		return cur;
 	}
 
@@ -685,7 +685,9 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	if (fi == NULL) {
 		FSLog("FI is NULL");
 	}
-	fd = open(fpath, fi->flags, 0666);
+	//fd = open(fpath, fi->flags, 0666);
+	fd = open(fpath, fi->flags);
+	
 	if (fd < 0) {
 		ret = -errno;
 		FSLog("Fail in fd open");
@@ -989,6 +991,17 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	// 	if (my_node != NULL)
 	// 		add_child(root_node, my_node);
 	create_node_from_path(path, YP_PIC, NULL);
+	FSLog("creat");
+	fd = creat(fpath, mode);
+	
+	if (fd < 0)
+		return -errno;
+		
+	fi->fh = fd;
+	
+	return fd;
+	
+	//return ypfs_open(path, fi);
 /*
 
 
@@ -1020,7 +1033,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 
 */
 	
-	return ypfs_open(path, fi);
+	
 }
 
 
