@@ -73,6 +73,8 @@ const char *ypfs_str = "Welecome to your pic filesystem!\n";
 const char *ypfs_path = "/ypfs";
 char username[30];
 
+void remove_self_and_children_file(struct YP_NODE *);
+
 static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
 {
 
@@ -258,6 +260,9 @@ void remove_self_and_children_file(struct YP_NODE *parent) {
 	strcpy(update_file_name, "/");
 	strcat(update_file_name, parent->name);
 	ypfs_switchpath(absolute_path, update_file_name);
+	FSLog("remove: ");
+	FSLog(absolute_path);
+	
 	if (parent->type == YP_DIR)
 		rmdir(absolute_path);
 	else
@@ -265,7 +270,9 @@ void remove_self_and_children_file(struct YP_NODE *parent) {
 }
 
 void remove_temp_file() {
+	FSLog("Start removing...");
 	remove_self_and_children_file(root_node);
+	FSLog("Finish removing...");
 }
 
 int path_depth(const char *path) {
