@@ -1176,6 +1176,8 @@ void my_little_curl_test() {
 	printf("curl_easy_init\n");
 	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-54-243-84-10.compute-1.amazonaws.com/cs4261_proj2_web/index.php/"); 
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
+	curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, read_callback); 
+	
 	
 	curl_code = curl_easy_perform(curl_handler);
 	
@@ -1197,7 +1199,7 @@ static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
 	retcode = fread(ptr, size, nmemb, stream);
     nread = (curl_off_t)retcode;
     
-  	fprintf(stderr, "*** We read %d bytes from file\n", nread);
+  	printf("Return %s\n", (char *)ptr);
  
 	return retcode;
 }
