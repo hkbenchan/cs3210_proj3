@@ -395,7 +395,7 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		return -ENOENT;
 	}
 	strcpy(tmp_file_name,"/");
-	strcpy(tmp_file_name, my_node_no_ext->name);
+	strcat(tmp_file_name, my_node_no_ext->name);
 	ypfs_switchpath(fpath, tmp_file_name);
 	
 	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
