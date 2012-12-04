@@ -272,6 +272,9 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 	char *curr_char;
 	int n = 0;
 
+	FSLog("node_resolver");
+	FSLog(path);
+
 	if (cur == NULL)
 		FSLog("node for path: NULL cur");
 
@@ -1126,7 +1129,7 @@ int main(int argc, char *argv[])
 	strcpy(ypfs_data->username ,username);
 	
 	root_node = new_node("/", YP_DIR, NULL);
-	new_node("/ypfs", YP_DIR, NULL);
+	create_node_for_path("/ypfs", YP_DIR, NULL);
 	
 	FSLog("about to call fuse_main");
     fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
