@@ -51,7 +51,7 @@ in base64
 
 #define CURRENT_SESSION ((struct ypfs_session *) fuse_get_context()->private_data)
 // allow extension: .gif, .jpg, .png
-
+typedef unsigned char uchar;
 static const uchar ckey[] = "ypfs_filesystem";
 
 struct ypfs_session {
@@ -62,7 +62,7 @@ struct ypfs_session {
 };
 
 typedef enum {YP_DIR, YP_PIC} YP_TYPE;
-typedef unsigned char uchar;
+
 struct YP_NODE {
 	char *name;
 	char *hash; // unique name
