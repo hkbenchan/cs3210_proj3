@@ -3,6 +3,14 @@ CS 3210 Project 3 - YPFS
 Author: Ho Pan Chan, Robert Harrison
 **/
 
+/*** uploading pics:
+username
+password
+pic_name  (unique)
+e.g. my_pic_2012_12_01.gif
+in base64
+****/
+
 #define FUSE_USE_VERSION 26
 
 #ifdef HAVE_CONFIG_H
@@ -42,6 +50,20 @@ struct ypfs_session {
 	char *public_key_location;
 	char *mount_point;
 };
+
+typedef enum {YP_DIR, YP_PIC} YP_TYPE;
+
+struct YP_NODE {
+	char *name;
+	char *hash; // unique name
+	YP_TYPE type;
+	struct YP_NODE ** children;
+	struct YP_NODE* parent;
+	int no_child;
+	int open_count;
+};
+
+static YP_NODE root_node;
 
 const char *ypfs_str = "Welecome to your pic filesystem!\n";
 const char *ypfs_path = "/ypfs";
@@ -118,6 +140,203 @@ int make_my_config()
 	return ret;
 }
 
+YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
+	YP_NODE *my_new_node = malloc(sizeof(struct YP_NODE));
+	
+	my_new_node->name = malloc(sizeof(char) * (strlen(path) + 1));
+	strcpy(my_new_node->name, path);
+	my_new_node->type = type;
+	my_new_node->children = NULL;
+	my_new_node->parent = NULL;
+	my_new_node->no_child = 0;
+	my_new_node->open_count = 0;
+	my_new_node->hash = NULL;
+	
+	if (type == YP_PIC && hash == NULL) {
+		my_new_node->hash = malloc(sizeof(char) * 50);
+		sprintf(my_new_node->hash, "%lld", random() % 1000000000);
+	} else if (type == YP_DIR && hash) {
+		my_new_node->hash = malloc(sizeof(char) * 50);
+		sprintf(my_new_node->hash, "%s", hash);
+	}
+
+	return my_new_node;
+}
+
+YP_NODE* add_child(YP_NODE* parent, YP_NODE* child) {
+	YP_NODE** tmp_child_list;
+	int tmp_no_child;
+	int i;
+	
+	if (parent == NULL) {
+		FSLog("Add child to a null parent");
+		return NULL;
+	}
+	
+	tmp_child_list = parent->children;
+	tmp_no_child = parent->no_child;
+	
+	parent->children = malloc((tmp_no_child+1)*sizeof(struct YP_NODE*));
+	
+	for (i=0; i<tmp_no_child; i++) {
+		(parent->children)[i] = tmp_child_list[i];
+	}
+	
+	(parent->children)[tmp_no_child] = child;
+	parent->no_child = tmp_no_child+1;
+	
+	child->parent = parent;
+	
+	free(tmp_child_list);
+	
+	return child;
+}
+
+void remove_child(YP_NODE* parent, YP_NODE* child) {
+	YP_NODE** tmp_child_list;
+	int tmp_no_child;
+	int i, active;
+	
+	if (parent == NULL) {
+		FSLog("Remove child to a null parent");
+		return NULL;
+	}
+	
+	tmp_child_list = parent->children;
+	tmp_no_child = parent->no_child;
+	
+	if (tmp_no_child < 1) {
+		FSLog("Parent has no child");
+		return ;
+	}
+	
+	parent->children = malloc((tmp_no_child-1)*sizeof(struct YP_NODE*));
+	
+	for (i=0; i<tmp_no_child; i++) {
+		if (tmp_child_list[i] != child) {
+			(parent->children)[active] = tmp_child_list[i];
+			active++;
+		}
+	}
+	
+	parent->no_child = tmp_no_child-1;
+	
+	free(tmp_child_list);
+	
+	if (child->name)
+		free(child->name);
+	
+	if (child->hash)
+		free(child->hash);
+	
+	if (child)
+		free(child);
+	
+}
+
+void remove_node(YP_NODE *node) {
+	remove_child(node->parent, node);
+}
+
+int path_depth(const char *path) {
+	int i = 0;
+	int j = 0;
+	int k = strlen(path);
+	
+	for (j = 0; j<k-1; j++) {
+		if (path[j] == '/')
+			i++;
+	}
+	
+	return i;
+}
+
+
+char* str_c(const char* path, char after)
+{
+	char *tmp = strstr(path, after);
+	if (tmp != NULL)
+		return tmp + 1;
+	else
+		return NULL;
+}
+
+
+
+YP_NODE node_resolver(const char *path, YP_NODE *cur, int create, YP_TYPE type, char *hash, int skip_ext)
+{
+	char name[PATH_MAX_LENGTH];
+	int i = 0;
+	int last_node = 0;
+	char *ext;
+	char compare_name[PATH_MAX_LENGTH];
+	char *curr_char;
+	int n = 0;
+
+	if (cur == NULL)
+		FSLog("node for path: NULL cur");
+
+	ext = str_c(path, ".");
+
+	if (*path == '/')
+		path++;
+
+	i = 0;
+	
+	// find the name
+	while(*path && *path != '/' && ( ext == NULL || path < ext-1 || !skip_ext)) {
+		name[i] = *(path++);
+		i++;
+	}
+	name[i] = '\0';
+
+	if (*path == '\0')
+		last_node = 1;
+
+	if (i == 0) {
+		return curr;
+	}
+
+	for (i = 0; i < cur->no_child; i++) {
+		// compare the name
+		
+		ext = str_c((cur->children[i])->name, '.');
+		curr_char = (cur->children[i])->name;
+		n = 0;
+		while(*curr_char != '\0' && (ext == NULL || !skip_ext || curr_char < ext-1)) {
+			compare_name[n] = *(curr_char++);
+			n++;
+		}
+		compare_name[n] = '\0';
+		if (strcmp(name, compare_name) == 0)
+			return node_resolver(path, curr->children[i], create, type, hash, ignore_ext); // search it inside this child
+		*compare_name = '\0';
+	}
+
+
+	if (create == 1) {
+		// add a child to cur and continue the process
+		return node_resolver(path, add_child(curr, init_node(name, last_node == 1 ? type : NODE_DIR, hash)), create, type, hash, skip_ext);
+	}
+
+	return NULL;
+}
+
+
+YP_NODE *search_node(const char *path) {
+	return node_resolver((char *)path, root_node, 0, 0, NULL, 0);
+}
+
+YP_NODE *search_node_no_extension(const char *path) {
+	return node_resolver((char *)path, root_node, 0, 0, NULL, 1);
+}
+
+YP_NODE *create_node_from_path(const char *path, YP_TYPE type, char *hash) {
+	return node_resolver((char *)path, root_node, 1, type, hash, 1);
+}
+
+
+
 ///////////////////////////////////////////////////////////
 //
 // Prototypes for all these functions, and the C-style comments,
@@ -134,30 +353,52 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 {
     int ret = 0;
 	char fpath[MAX_PATH_LENGTH];
+	YP_NODE *my_node, *my_node_no_ext;
 
 	FSLog("getattr");
 	FSLog(path);
 	
-    memset(stbuf, 0, sizeof(struct stat));
-    if(strcmp(path, "/") == 0) {
-        stbuf->st_mode = S_IFDIR | 0777;
-        stbuf->st_nlink = 2;
-		stbuf->st_size = 4096; // I'm directory
-    }
-    else if(strcmp(path, ypfs_path) == 0) {
-        stbuf->st_mode = S_IFDIR | 0644;
-        stbuf->st_nlink = 2;
-        stbuf->st_size = 4096;
-    }
-    else {
-		ypfs_fullpath(fpath, path);
-		ret = lstat(fpath, stbuf);
-		
-		if (ret < 0) {
-			ret = -errno;
-		}
+	my_node = search_node(path);
+	my_node_no_ext = search_node_no_extension(path);
+	
+	if (my_node_no_ext == NULL) {
+		return -ENOENT;
 	}
 	
+	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
+		// add extension in here
+		// image_convert(my_node_no_ext, path);
+		// for stat
+		strcat(fpath, strstr(path, "."));
+	}
+	
+	memset(stbuf, 0, sizeof(struct stat));
+	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
+		// convert here, so file 1324242 becomes 1324242.png
+		// convert_img(my_node_no_ext, path);
+		// for stat later in function
+		strcat(fpath, ".");
+		strcat(fpath, str_c(path, '.'));
+	}
+	else if (my_node_no_ext->type == YP_DIR && strstr(path, "ypfs")) {
+		// temp/ypfs/{some_dir}
+		stbuf->st_mode = S_IFDIR | 0755;
+		stbuf->st_nlink = 2;
+	} else if (my_node_no_ext->type == YP_DIR) {
+		// temp/{some_dir} but not ypfs
+		stbuf->st_mode = S_IFDIR | 0444;
+		stbuf->st_nlink = 2;
+	} else if (my_node_no_ext != NULL && my_node != my_node_no_ext) {
+		// get attr for non-original file ext
+		ret = stat(fpath, stbuf);
+		stbuf->st_mode = S_IFREG | 0444;
+	} else if (my_node_no_ext != NULL) {
+		ret = stat(fpath, stbuf);
+		stbuf->st_mode = S_IFREG | 0444;
+	} else {
+		ret = -ENOENT;
+	}
+		
     return ret;
 }
 
@@ -174,10 +415,11 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 // null.  So, the size passed to to the system readlink() must be one
 // less than the size passed to bb_readlink()
 // bb_readlink() code by Bernardo F Costa (thanks!)
+/*
 int ypfs_readlink(const char *path, char *link, size_t size)
 {
     int ret = 0;
-/*
+
     char fpath[MAX_PATH_LENGTH];
     
     log_msg("bb_readlink(path=\"%s\", link=\"%s\", size=%d)\n",
@@ -191,10 +433,11 @@ int ypfs_readlink(const char *path, char *link, size_t size)
 	link[ret] = '\0';
 	ret = 0;
     }
-*/
+
 	FSLog("readlink");
     return ret;
 }
+*/
 
 /** Create a file node
  *
@@ -205,51 +448,21 @@ int ypfs_readlink(const char *path, char *link, size_t size)
 int ypfs_mknod(const char *path, mode_t mode, dev_t dev)
 {
     int ret = 0;
-    /*char fpath[MAX_PATH_LENGTH];
-    
-    log_msg("\nbb_mknod(path=\"%s\", mode=0%3o, dev=%lld)\n",
-	  path, mode, dev);
-    bb_fullpath(fpath, path);
-    
-    // On Linux this could just be 'mknod(path, mode, rdev)' but this
-    //  is more portable
-    if (S_ISREG(mode)) {
-        ret = open(fpath, O_CREAT | O_EXCL | O_WRONLY, mode);
-	if (ret < 0)
-	    ret = bb_error("bb_mknod open");
-        else {
-            ret = close(ret);
-	    if (ret < 0)
-		ret = bb_error("bb_mknod close");
-	}
-    } else
-	if (S_ISFIFO(mode)) {
-	    ret = mkfifo(fpath, mode);
-	    if (ret < 0)
-		ret = bb_error("bb_mknod mkfifo");
-	} else {
-	    ret = mknod(fpath, mode, dev);
-	    if (ret < 0)
-		ret = bb_error("bb_mknod mknod");
-	}
-    */
 	FSLog("mknod");
     return ret;
 }
 
 /** Create a directory */
 int ypfs_mkdir(const char* path, mode_t mode){
-	int ret;
-	char fpath[MAX_PATH_LENGTH];
+	int ret = 0;
+	//char fpath[MAX_PATH_LENGTH];
 	
 	FSLog("mkdir");
 	FSLog(path);
-	ypfs_fullpath(fpath, path);
-
-	ret = mkdir(fpath, mode);
-	if (ret < 0)
-		return -errno;
-
+	//ypfs_fullpath(fpath, path);
+	
+	if (create_node_from_path(path, YP_DIR, NULL) == NULL)
+		ret = -1;
 	return ret;
 }
 
@@ -279,30 +492,27 @@ int ypfs_mkdir(const char* path, mode_t mode){
 int ypfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                          off_t offset, struct fuse_file_info *fi)
 {
+	int i;
     (void) offset;
     (void) fi;
-
+	YP_NODE *my_node;
 	FSLog("readdir");
 	FSLog(path);
 	
-	int match = 0;
+	my_node = search_node(path);
 	
-    if(strcmp(path, "/") == 0) {
-		match++;
-		filler(buf, ypfs_path + 1, NULL, 0);
-	} else if (strcmp(path, ypfs_path) == 0) {
-		match++;
-	}
-	
-	if (match == 0) {
+	if (my_node == NULL)
 		return -ENOENT;
-	}
-
+	
+	
 	// put directories or files here mean display them
 
     filler(buf, ".", NULL, 0);
     filler(buf, "..", NULL, 0);
     
+	for (i = 0; i< my_node->no_child; i++) {
+		filler(buf, (my_node->children[i])->name, NULL, 0);
+	}
 
     return 0;
 }
@@ -312,13 +522,15 @@ int ypfs_unlink(const char *path)
 {
     int ret = 0;
 	char fpath[MAX_PATH_LENGTH];
+	YP_NODE *f_node = search_node(path);
 	FSLog("unlink");
 	FSLog(path);
-	//     
-	//     log_msg("bb_unlink(path=\"%s\")\n",
-	//     path);
+
 	ypfs_fullpath(fpath, path);
-	//     
+	
+	if (f_node != NULL)
+		remove_node(f_node);
+	
 	ret = unlink(fpath);
 	if (ret < 0)
 		ret = -errno;
@@ -326,16 +538,16 @@ int ypfs_unlink(const char *path)
     return ret;
 }
 
+
 /** Remove a directory */
+/*
 int ypfs_rmdir(const char *path)
 {
     int ret = 0;
  	char fpath[MAX_PATH_LENGTH];
 	FSLog("rmdir");
 	FSLog(path);
- 	//     
- 	//     log_msg("bb_rmdir(path=\"%s\")\n",
- 	//     path);
+ 	
  	ypfs_fullpath(fpath, path);
  	//     
  	ret = rmdir(fpath);
@@ -344,100 +556,51 @@ int ypfs_rmdir(const char *path)
 	
     return ret;
 }
+*/
 
 /** Create a symbolic link */
 // The parameters here are a little bit confusing, but do correspond
 // to the symlink() system call.  The 'path' is where the link points,
 // while the 'link' is the link itself.  So we need to leave the path
 // unaltered, but insert the link into the mounted directory.
+/*
 int ypfs_symlink(const char *path, const char *link)
 {
     int ret = 0;
 	char flink[MAX_PATH_LENGTH];
 	FSLog("symlink");
-	//     
-	//     log_msg("\nbb_symlink(path=\"%s\", link=\"%s\")\n",
-	//     path, link);
+	
 	ypfs_fullpath(flink, link);
-	//     
+	 
 	ret = symlink(path, flink);
 	if (ret < 0)
 		ret = -errno;
 	
     return ret;
 }
+*/
 
 /** Rename a file */
 // both path and newpath are fs-relative
 int ypfs_rename(const char *path, const char *newpath)
 {
     int ret = 0;
-	char fpath[MAX_PATH_LENGTH], fnewpath[MAX_PATH_LENGTH];
+	YP_NODE *old_n, *new_n;
 	FSLog("rename");
-	//     
-	//     log_msg("\nbb_rename(fpath=\"%s\", newpath=\"%s\")\n",
-	//     path, newpath);
-	ypfs_fullpath(fpath, path);
-	ypfs_fullpath(fnewpath, newpath);
-	//     
-	ret = rename(fpath, fnewpath);
-	if (ret < 0)
-		ret = -errno;
+	
+	old_n = search_node(path);
+	
+	if (old_n == NULL)
+		return -ENOENT;
 		
+	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
 	
-    return ret;
-}
+	if (new_n != old_n)
+		remove_node(old_n);
+	//ypfs_fullpath(fpath, path);
+	//ypfs_fullpath(fnewpath, newpath);
 
-/** Create a hard link to a file */
-int ypfs_link(const char *path, const char *newpath)
-{
-    int ret = 0;
- 	char fpath[MAX_PATH_LENGTH], fnewpath[MAX_PATH_LENGTH];
-	FSLog("link");
-
- 	//     
- 	//     log_msg("\nbb_link(path=\"%s\", newpath=\"%s\")\n",
- 	//     path, newpath);
-    ypfs_fullpath(fpath, path);
-    ypfs_fullpath(fnewpath, newpath);
- 	//     
- 	ret = link(fpath, fnewpath);
- 	if (ret < 0)
- 		ret = -errno;
-	
-    return ret;
-}
-
-/** Change the permission bits of a file */
-int ypfs_chmod(const char *path, mode_t mode)
-{
-	int res;
-	char fpath[MAX_PATH_LENGTH];
-	FSLog("chmod");
-	FSLog(path);
-	ypfs_fullpath(fpath, path);
-	
-	res = chmod(fpath, mode);
-	if (res == -1)
-		return -errno;
-
-	return 0;
-}
-
-/** Change the owner and group of a file */
-int ypfs_chown(const char *path, uid_t uid, gid_t gid)
-{
-	int res;
-	char fpath[MAX_PATH_LENGTH];
-	FSLog("chown");
-	FSLog(path);
-	ypfs_fullpath(fpath, path);
-	
-	res = lchown(fpath, uid, gid);
-	if (res == -1)
-		return -errno;
-
-	return 0;
+    return 0;
 }
 
 /** Change the size of a file */
@@ -445,14 +608,29 @@ int ypfs_truncate(const char *path, off_t newsize)
 {
     int ret = 0;
 	char fpath[MAX_PATH_LENGTH];
-	
+	YP_NODE *f_node = search_node_no_extension(path), *r_node = search_node(path);
 	FSLog("truncate");
 	FSLog(path);
-	//     
-	//     log_msg("\nbb_truncate(path=\"%s\", newsize=%lld)\n",
-	//     path, newsize);
+	
 	ypfs_fullpath(fpath, path);
-	//     
+	
+	if (f_node != r_node) {
+		strcat(fpath, strchr(path, '.'));
+	}
+	
+	/*
+		char full_file_name[1000];
+		NODE file_node = node_ignore_extension(path);
+		NODE real_node = node_for_path(path);
+		mylog("truncate");
+		to_full_path(file_node->hash, full_file_name);
+		if (file_node != real_node) {
+		strcat(full_file_name, strchr(path, '.'));
+		}
+		return truncate(full_file_name, offset);
+	
+	*/
+		
 	ret = truncate(fpath, newsize);
 	if (ret < 0)
 		ret = -errno;
@@ -464,20 +642,9 @@ int ypfs_truncate(const char *path, off_t newsize)
 /** Change the access and modification times of a file with nanosecond resolution */
 int ypfs_utimens(const char *path, const struct timespec tv[2])
 {
-	int ret = -1;
- 	char fpath[MAX_PATH_LENGTH];
+	int ret = 0;
 	FSLog("utimens");
 	FSLog(path);
- 	//     
- 	//     log_msg("\nbb_utime(path=\"%s\", ubuf=0x%08x)\n",
- 	//     path, ubuf);
- 	ypfs_fullpath(fpath, path);
- 	    
- 	//ret = utimes(fpath, tv);
-	
- 	// if (ret < 0)
- 	//  		ret = -errno
- 	// 	
     return ret;
 }
 
@@ -496,30 +663,28 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 {
 	int fd, ret = 0;
 	char fpath[MAX_PATH_LENGTH];
+	YP_NODE *my_node;
 	FSLog("open");
 	FSLog(path);
 	ypfs_fullpath(fpath, path);
 	
-	// if((fi->flags & 3) != O_RDONLY)
-	//         return -EACCES;
-	// 
-	// 	if (strcmp(path, "/") == 0) {
-	// 		fd = open(path, fi->flags);
-	// 	}
-	// 
-	// 	else if(strcmp(path, ypfs_path) == 0) {
-	// 		fd = open(path, fi->flags);
-	// 	} else
-	//         return -ENOENT;
-	// 
-	// 	if ( fd == -1 )
-	// 		return -errno;
+	my_node = node_path_no_extension(path);
+	
+	if (my_node != NULL) {
+		return -ENOENT;
+	}
+	
+	if (strcmp( strstr(path, "."), strstr(my_node->name, ".") ) != 0) {
+		strcat(fpath, strstr(my_node->name, "."));
+	}
 	
 	fd = open(fpath, fi->flags);
-    if (fd < 0)
+	if (fd < 0)
 		ret = -errno;
-
+	
     fi->fh = fd;
+
+	my_node->open_count++;
 
     return ret;
 }
@@ -545,7 +710,14 @@ int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
                       struct fuse_file_info *fi)
 {
 	int ret = 0;
+	YP_NODE *my_node;
 	FSLog("read");
+	
+	my_node = node_path_no_extension(path);
+	
+	if (my_node == NULL)
+		return -ENOENT;
+	
 	ret = pread(fi->fh, buf, size, offset);
 	
 	if (ret < 0)
@@ -607,40 +779,6 @@ int ypfs_statfs(const char *path, struct statvfs *statv)
     return ret;
 }
 
-/** Possibly flush cached data
- *
- * BIG NOTE: This is not equivalent to fsync().  It's not a
- * request to sync dirty data.
- *
- * Flush is called on each close() of a file descriptor.  So if a
- * filesystem wants to return write errors in close() and the file
- * has cached dirty data, this is a good place to write back data
- * and return any errors.  Since many applications ignore close()
- * errors this is not always useful.
- *
- * NOTE: The flush() method may be called more than once for each
- * open().  This happens if more than one file descriptor refers
- * to an opened file due to dup(), dup2() or fork() calls.  It is
- * not possible to determine if a flush is final, so each flush
- * should be treated equally.  Multiple write-flush sequences are
- * relatively rare, so this shouldn't be a problem.
- *
- * Filesystems shouldn't assume that flush will always be called
- * after some writes, or that if will be called at all.
- *
- * Changed in version 2.2
- */
-int ypfs_flush(const char *path, struct fuse_file_info *fi)
-{
-    int ret = 0;
-    FSLog("flush");
-    // log_msg("\nbb_flush(path=\"%s\", fi=0x%08x)\n", path, fi);
-    //     // no need to get fpath on this one, since I work from fi->fh not the path
-    //     log_fi(fi);
-	
-    return ret;
-}
-
 
 /** Release an open file
  *
@@ -662,6 +800,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	// handle the file here
 	
 	// TO DO:
+	/*
 	int ret = 0;
 	
 	FSLog("release");
@@ -670,121 +809,88 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	ret = close(fi->fh);
 	
 	return ret;
-}
+	*/
+	//ExifData *ed;
+	//ExifEntry *entry;
+	char full_file_name[1000];
+	YP_NODE *f_node = search_node_no_extension(path);
+	char buf[1024];
+	struct tm file_time;
+	char year[1024];
+	char month[1024];
+	char new_name[2048];
 
-/** Synchronize file contents
- *
- * If the datasync parameter is non-zero, then only the user data
- * should be flushed, not the meta data.
- *
- * Changed in version 2.2
- */
-int ypfs_fsync(const char *path, int datasync, struct fuse_file_info *fi)
-{
-    int ret = 0;
-    
-    // log_msg("\nbb_fsync(path=\"%s\", datasync=%d, fi=0x%08x)\n",
-    // 	    path, datasync, fi);
-    //     log_fi(fi);
-    //     
-    //     if (datasync)
-    // 	ret = fdatasync(fi->fh);
-    //     else
-    // 	ret = fsync(fi->fh);
-    //     
-    //     if (ret < 0)
-    // 	bb_error("bb_fsync fsync");
-	FSLog("fsync");
-    return ret;
-}
+	mylog("release");
 
-/** Set extended attributes */
-/*
-int ypfs_setxattr(const char *path, const char *name, const char *value, size_t size, int flags)
-{
-    int ret = 0;
-	char fpath[MAX_PATH_LENGTH];
-	FSLog("setxattr");
-	FSLog(path);
-	//     
-	//     log_msg("\nbb_setxattr(path=\"%s\", name=\"%s\", value=\"%s\", size=%d, flags=0x%08x)\n",
-	//     path, name, value, size, flags);
-	ypfs_fullpath(fpath, path);
-	//     
-	ret = lsetxattr(fpath, name, value, size, flags);
-	if (ret < 0)
-		ret = -errno;
+	to_full_path(f_node->hash, full_file_name);
+	close(fi->fh);
+	f_node->open_count--;
+
+	// redetermine where the file goes
+	if (file_node->open_count <= 0) {
+		FSlog("file completely closed; checking if renaming necessary");
+		// ed = exif_data_new_from_file(full_file_name);
+		// if (ed) {
+		// 	entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
+		// 	exif_entry_get_value(entry, buf, sizeof(buf));
+		// 	mylog("Tag content:");
+		// 	mylog(buf);
+		// 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
+		// 	strftime(year, 1024, "%Y", &file_time);
+		// 	strftime(month, 1024, "%B", &file_time);
+		// 	sprintf(new_name, "/%s/%s/%s", year, month, file_node->name);
+		// 	mylog(new_name);
+		// 	ypfs_rename(path, new_name);
+		// 	exif_data_unref(ed);
+		// } else {
+			int num_slashes = 0;
+			int i;
+			time_t rawtime;
+
+			for (i = 0; i < strlen(path); i++) {
+				if (path[i] == '/')
+				num_slashes++;
+			}
+			// in root
+			if (num_slashes == 1) {
+				struct stat sb;
+				struct tm * pic_time;
+				
+				if (fstat(fi->fh, &sb) == -1) {
+				        perror("stat");
+				        exit(EXIT_FAILURE);
+				}
+				
+				pic_time = localtime(&sb.st_ctime);
+				strftime(year, 1024, "%Y", pic_time);
+				strftime(month, 1024, "%B", pic_time);
+				sprintf(new_name, "/%s/%s/%s", year, month, file_node->name);
+				FSLog(new_name);
+				ypfs_rename(path, new_name);
+
+			}
+		// }
+		//ypfs_rename(path, "/lol");
+		//
+
+		/*if (file_node->last_edited_ext){
+		char new_path[1024];
+		strcpy(new_path, path);
+		strcpy(string_after_char(new_path, '.'), file_node->last_edited_ext);
+		mylog("about to clean up conversions");
+		mylog(new_path);
+		cleanup_conversions(new_path);
+
+
+		free(file_node->last_edited_ext);
+		file_node->last_edited_ext = NULL;
+	}*/
+	}
+
+	return 0;
 	
-    return ret;
 }
-*/
-/** Get extended attributes */
-/*
-int ypfs_getxattr(const char *path, const char *name, char *value, size_t size)
-{
-    int ret = 0;
-	char fpath[MAX_PATH_LENGTH];
-	FSLog("getxattr");
-	FSLog(path);
-	//     
-	//     log_msg("\nbb_getxattr(path = \"%s\", name = \"%s\", value = 0x%08x, size = %d)\n",
-	//     path, name, value, size);
-	ypfs_fullpath(fpath, path);
-	//     
-	ret = lgetxattr(fpath, name, value, size);
-	if (ret < 0)
-		ret = -errno;
-	//     else
-	// log_msg("    value = \"%s\"\n", value);
-	
-    return ret;
-}
-*/
 
-/** List extended attributes */
-/*
-int ypfs_listxattr(const char *path, char *list, size_t size)
-{
-    int ret = 0;
- 	char fpath[MAX_PATH_LENGTH];
-	FSLog("listxattr");
-	FSLog(path);
- 	//     
- 	//     log_msg("bb_listxattr(path=\"%s\", list=0x%08x, size=%d)\n",
- 	//     path, list, size
- 	//     );
- 	ypfs_fullpath(fpath, path);
- 	//     
- 	ret = llistxattr(fpath, list, size);
- 	if (ret < 0)
- 		ret = -errno;
- 	//     
- 	//     log_msg("    returned attributes (length %d):\n", ret);
- 	//     for (ptr = list; ptr < list + ret; ptr += strlen(ptr)+1)
- 	// log_msg("    \"%s\"\n", ptr);
-
-    return ret;
-}
-*/
-/** Remove extended attributes */
-/*
-int ypfs_removexattr(const char *path, const char *name)
-{
-    int ret = 0;
-    char fpath[MAX_PATH_LENGTH];
-	FSLog("removexattr");
-    //     
-    //     log_msg("\nbb_removexattr(path=\"%s\", name=\"%s\")\n",
-    // 	    path, name);
-    ypfs_fullpath(fpath, path);
-    //     
-    ret = lremovexattr(fpath, name);
-    if (ret < 0)
-    	ret = -errno;
-	
-    return ret;
-}
-*/
 /** Open directory
  *
  * This method should check if the open operation is permitted for
@@ -795,25 +901,17 @@ int ypfs_removexattr(const char *path, const char *name)
 int ypfs_opendir(const char *path, struct fuse_file_info *fi)
 {
     
-    int ret = 0;
+    int ret = -1;
+	YP_NODE *my_node = node_for_path(path);
 	DIR *dp;
     char fpath[MAX_PATH_LENGTH];
 	FSLog("opendir");
 	FSLog(path);
-    //     
-    //     log_msg("\nbb_opendir(path=\"%s\", fi=0x%08x)\n",
-    // 	  path, fi);
+
     ypfs_fullpath(fpath, path);
-    //     
-  	//   dp = opendir(fpath);
-  	//     if (dp == NULL) {
-  	// 	ret = -errno;
-  	// 	FSLog("dp null");
-  	// }
-  	//     
-  	//     fi->fh = (intptr_t) dp;
-        
-    //     log_fi(fi);
+   	
+	if (my_node && my_node->type == YP_DIR)
+		ret = 0;
 	
     return ret;
 }
@@ -823,6 +921,7 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
  *
  * Introduced in version 2.3
  */
+/*
 int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
 {
     int ret = 0;
@@ -835,26 +934,89 @@ int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
 	
     return ret;
 }
+*/
 
-/** Synchronize directory contents
+
+/**
+ * Create and open a file
  *
- * If the datasync parameter is non-zero, then only the user data
- * should be flushed, not the meta data
+ * If the file does not exist, first create it with the specified
+ * mode, and then open it.
  *
- * Introduced in version 2.3
+ * If this method is not implemented or under Linux kernel
+ * versions earlier than 2.6.15, the mknod() and open() methods
+ * will be called instead.
+ *
+ * Introduced in version 2.5
  */
-// when exactly is this called?  when a user calls fsync and it
-// happens to be a directory? ???
-int ypfs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi)
+int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
-    int ret = 0;
-    FSLog("fsyncdir");
-    // log_msg("\nbb_fsyncdir(path=\"%s\", datasync=%d, fi=0x%08x)\n",
-    // 	    path, datasync, fi);
-    //     log_fi(fi);
+    int ret = 0, i, num_slashes = 0;
+	YP_NODE *my_node;
+ 	char fpath[MAX_PATH_LENGTH], *filename = (char *)path;
+ 	int fd;
+
+	FSLog("Create");
+	FSLog(path);
+	ypfs_fullpath(fpath, path);
+	FSLog(fpath);
 	
-    return ret;
+	while(*end != '\0') end++;
+	while(*end != '/' && end >= path) end--;
+	if (*end == '/') end++;
+	
+	for (i = 0; i< strlen(path); i++) {
+		if (path[i] == '/')
+			num_slashes++;
+	}
+	
+	if (num_slashes > 2 || strstr(path, "/ypfs")) {
+		return -1;
+	}
+
+	FSLog("Create test pass");
+	
+	my_node = new_node(end, NODE_FILE, NULL);
+	add_child(root, new_node);
+
+	//fd = creat(fpath, mode);
+	//FSLog("Create end");
+
+
+/*
+
+
+
+	if (0 == strcmp(end, "debugtree")) {
+	print_full_tree();
+	return -1;
+	}
+
+	if (0 == strcmp(end, "debugtwitter")) {
+	num_urls = twitter_get_img_urls("team_initrd", urls, 128);
+	mylog("TWITTER URLS");
+	for (i = 0; i < num_urls; i++) {
+	mylog(urls[i]);
+	free(urls[i]);
+	}
+	return -1;
+	}
+
+	if (0 == strcmp(end, "debugserialize")) {
+	serialize();
+	return -1;
+	}
+
+	if (0 == strcmp(end, "debugdeserialize")) {
+	deserialize();
+	return -1;
+	}
+
+*/
+	
+	return ypfs_open(path, fi);
 }
+
 
 /**
  * Initialize filesystem
@@ -903,192 +1065,12 @@ void ypfs_destroy(void *userdata) {
 }
 
 
-/**
- * Check file access permissions
- *
- * This will be called for the access() system call.  If the
- * 'default_permissions' mount option is given, this method is not
- * called.
- *
- * This method is not called under Linux kernel versions 2.4.x
- *
- * Introduced in version 2.5
- */
-int ypfs_access(const char *path, int mask)
-{
-    int ret = 0;
-	char fpath[MAX_PATH_LENGTH];
-	FSLog("access");
-	FSLog(path);
-	//    
-	//     log_msg("\nbb_access(path=\"%s\", mask=0%o)\n",
-	//     path, mask);
-	ypfs_fullpath(fpath, path);
-	//     
-	ret = access(fpath, mask);
-	//     
-	if (ret < 0)
-		ret = -errno;
-		
-    return ret;
-}
 
-
-/**
- * Create and open a file
- *
- * If the file does not exist, first create it with the specified
- * mode, and then open it.
- *
- * If this method is not implemented or under Linux kernel
- * versions earlier than 2.6.15, the mknod() and open() methods
- * will be called instead.
- *
- * Introduced in version 2.5
- */
-int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
-{
-    int ret = 0;
- 	char fpath[MAX_PATH_LENGTH];
- 	int fd;
-
-	FSLog("Create");
-	FSLog(path);
-	ypfs_fullpath(fpath, path);
-	FSLog(fpath);
-	
-	fd = creat(fpath, mode);
-	FSLog("Create end");
-	
-	if (fd < 0)
-		ret = -errno;
-
-	fi->fh = fd;
- 	//     
- 	//     log_msg("\nbb_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n",
- 	//     path, mode, fi);
- 	//     bb_fullpath(fpath, path);
- 	//     
- 	//     fd = creat(fpath, mode);
- 	//     if (fd < 0)
- 	// ret = bb_error("bb_create creat");
- 	//     
- 	//     fi->fh = fd;
- 	//     
- 	//     log_fi(fi);
-
-	
-    return ret;
-}
-
-/**
- * Change the size of an open file
- *
- * This method is called instead of the truncate() method if the
- * truncation was invoked from an ftruncate() system call.
- *
- * If this method is not implemented or under Linux kernel
- * versions earlier than 2.6.15, the truncate() method will be
- * called instead.
- *
- * Introduced in version 2.5
- */
-int ypfs_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi)
-{
-    int ret = 0;
-	FSLog("ftruncate");
-    // log_msg("\nbb_ftruncate(path=\"%s\", offset=%lld, fi=0x%08x)\n",
-    // 	    path, offset, fi);
-    //     log_fi(fi);
-    //     
-    ret = ftruncate(fi->fh, offset);
-    if (ret < 0)
-		ret = -errno;
-    return ret;
-}
-
-/**
- * Get attributes from an open file
- *
- * This method is called instead of the getattr() method if the
- * file information is available.
- *
- * Currently this is only called after the create() method if that
- * is implemented (see above).  Later it may be called for
- * invocations of fstat() too.
- *
- * Introduced in version 2.5
- */
-// Since it's currently only called after bb_create(), and bb_create()
-// opens the file, I ought to be able to just use the fd and ignore
-// the path...
-int ypfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info *fi)
-{
-    int ret = 0;
-    FSLog("fgetattr");
-	FSLog(path);
-	ret = fstat(fi->fh, statbuf);
-	
-	if (ret < 0)
-		ret = -errno;
- 	//    log_msg("\nbb_fgetattr(path=\"%s\", statbuf=0x%08x, fi=0x%08x)\n",
- 	//     path, statbuf, fi);
- 	//     log_fi(fi);
- 	//     
- 	//     ret = fstat(fi->fh, statbuf);
- 	//     if (ret < 0)
- 	// ret = bb_error("bb_fgetattr fstat");
- 	//     
- 	//     log_stat(statbuf);
-    	
-    return ret;
-}
-
-
-
-/**
-* Perform POSIX file locking operation
-* 
-* The cmd argument will be either F_GETLK, F_SETLK or F_SETLKW.
-* For the meaning of fields in 'struct flock' see the man page for fcntl(2). 
-* The l_whence field will always be set to SEEK_SET.
-* 
-* For checking lock ownership, the 'fuse_file_info->owner' argument must be used.
-* For F_GETLK operation, the library will first check currently held locks, and 
-* if a conflicting lock is found it will return information without calling 
-* this method. This ensures, that for local locks the l_pid field 
-* is correctly filled in. The results may not be accurate in case 
-* of race conditions and in the presence of hard links, but 
-* it's unlikly that an application would rely on accurate 
-* GETLK results in these cases. If a conflicting lock is not 
-* found, this method will be called, and the filesystem may 
-* fill out l_pid by a meaningful value, or it may leave this field zero.
-*
-* For F_SETLK and F_SETLKW the l_pid field will be set to the pid 
-* of the process performing the locking operation.
-*
-* Note: if this method is not implemented, the kernel will still 
-* allow file locking to work locally. Hence it is only interesting 
-* for network filesystems and similar.
-*
-* Introduced in version 2.6
-*/
-/*
-int ypfs_lock(const char *, struct fuse_file_info *fi, int cmd, struct flock *)
-{
-	int ret = 0;
-	
-	
-	return ret;
-}
-*/
 
 struct fuse_operations ypfs_oper = {
     .init        = ypfs_init,
     .destroy     = ypfs_destroy,
     .getattr     = ypfs_getattr,
-    .fgetattr    = ypfs_fgetattr,
-    .access      = ypfs_access,
     .readlink    = ypfs_readlink,
     .readdir     = ypfs_readdir,
     .mknod       = ypfs_mknod,
@@ -1097,11 +1079,7 @@ struct fuse_operations ypfs_oper = {
     .unlink      = ypfs_unlink,
     .rmdir       = ypfs_rmdir,
     .rename      = ypfs_rename,
-    .link        = ypfs_link,
-    .chmod       = ypfs_chmod,
-    .chown       = ypfs_chown,
     .truncate    = ypfs_truncate,
-    .ftruncate   = ypfs_ftruncate,
     .utimens     = ypfs_utimens,
     .create      = ypfs_create,
     .open        = ypfs_open,
@@ -1111,15 +1089,6 @@ struct fuse_operations ypfs_oper = {
     .release     = ypfs_release,
     .opendir     = ypfs_opendir,
     .releasedir  = ypfs_releasedir,
-    .fsync       = ypfs_fsync,
-    .flush       = ypfs_flush,
-    .fsyncdir    = ypfs_fsyncdir,
-	// .setxattr 	 = ypfs_setxattr,
-	//   	.getxattr 	 = ypfs_getxattr,
-	// 	.listxattr	 = ypfs_listxattr,
-	// 	.removexattr = ypfs_removexattr,
-    // .lock        = ypfs_lock, // no idea on how it works
-    // .bmap        = ypfs_bmap, // we don't need this
 };
 
 int main(int argc, char *argv[])
@@ -1164,6 +1133,9 @@ int main(int argc, char *argv[])
 	printf("Welcome %s!\n", username);
 	
 	strcpy(ypfs_data->username ,username);
+	
+	root_node = new_node("/", YP_DIR, NULL);
+	new_node("/ypfs", YP_DIR, NULL);
 	
 	FSLog("about to call fuse_main");
     fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
