@@ -169,7 +169,7 @@ void Encrypt(uchar *in, uchar *out)
         firstRun = 0;
     }
 	
-	printf("ENCRY KEY: %s\n", encrypyKey);
+	printf("ENCRY KEY: %s\n", encryptKey);
 	
     AES_ecb_encrypt(in, out, &encryptKey, AES_ENCRYPT);
 
