@@ -42,7 +42,8 @@ in base64
 // externel lib
 #include <libexif/exif-data.h>
 #include <curl/curl.h>
-#include "parson.h" // json package
+
+#include <openssl/aes.h>
 
 #define DEBUG 0
 #define SERCET_LOCATION "/tmp/ypfs/.config"
@@ -50,6 +51,8 @@ in base64
 
 #define CURRENT_SESSION ((struct ypfs_session *) fuse_get_context()->private_data)
 // allow extension: .gif, .jpg, .png
+
+static const uchar ckey[] = "ypfs_filesystem";
 
 struct ypfs_session {
 	char username[30];
@@ -59,7 +62,7 @@ struct ypfs_session {
 };
 
 typedef enum {YP_DIR, YP_PIC} YP_TYPE;
-
+typedef unsigned char uchar;
 struct YP_NODE {
 	char *name;
 	char *hash; // unique name
@@ -68,6 +71,7 @@ struct YP_NODE {
 	struct YP_NODE* parent;
 	int no_child;
 	int open_count;
+	int private;
 };
 
 static struct YP_NODE *root_node;
@@ -152,6 +156,36 @@ int make_my_config()
 	}
 
 	return ret;
+}
+
+void Encrypt(uchar *in, uchar *out)
+{
+    static int firstRun = 1;
+    static AES_KEY encryptKey;
+
+    if (firstRun == 1)
+    {
+        AES_set_encrypt_key(ckey, 256, &encryptKey);
+        firstRun = 0;
+    }
+
+    AES_ecb_encrypt(in, out, &encryptKey, AES_ENCRYPT);
+
+}
+
+void Decrypt(uchar *in, uchar *out)
+{
+    static int firstRun = 1;
+    static AES_KEY decryptKey;
+
+    if (firstRun == 1)
+    {
+        AES_set_decrypt_key(ckey, 256, &decryptKey);
+        firstRun = 0;
+    }
+
+    AES_ecb_encrypt(in, out, &decryptKey, AES_DECRYPT);
+
 }
 
 struct YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
@@ -1238,6 +1272,16 @@ int main(int argc, char *argv[])
 	struct ypfs_session *ypfs_data;
 	int fuse_ret = 0;
 	int i;
+	
+	uchar in[2 * AES_BLOCK_SIZE] = "helloworld1234\nhelloworld1234\n";
+	uchar out[2 * AES_BLOCK_SIZE];
+	
+	Encrypt32(in, out);
+	printf("out: %s\n", out);
+	Decrypt32(out, in);
+	
+	//return 0;
+	
 	if (DEBUG == 0)
 		FSLogFlush();
 	
@@ -1245,6 +1289,9 @@ int main(int argc, char *argv[])
 		printf("./ypfs MOUNT_POINT");
 		abort();
 	}
+	
+	
+	
 	
 	my_little_curl_test();
 	printf("exit curl_test");
