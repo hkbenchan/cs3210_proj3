@@ -367,22 +367,17 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		return -ENOENT;
 	}
 	
-	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
-		// add extension in here
-		// image_convert(my_node_no_ext, path);
-		// for stat
-		strcat(fpath, strstr(path, "."));
-	}
+	ypfs_fullpath(fpath, my_node_no_ext->name);
 	
-	memset(stbuf, 0, sizeof(struct stat));
 	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
 		// convert here, so file 1324242 becomes 1324242.png
 		// convert_img(my_node_no_ext, path);
 		// for stat later in function
-		strcat(fpath, ".");
-		strcat(fpath, str_c(path, '.'));
+		strcat(fpath, strstr(path, '.'));
 	}
-	else if (my_node_no_ext->type == YP_DIR && strstr(path, "ypfs")) {
+	memset(stbuf, 0, sizeof(struct stat));
+	
+	if (my_node_no_ext->type == YP_DIR && strstr(path, "ypfs")) {
 		// temp/ypfs/{some_dir}
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
@@ -670,6 +665,7 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	FSLog(path);
 	ypfs_fullpath(fpath, path);
 	FSLog(fpath);
+	
 	my_node = search_node_no_extension(path);
 	
 	if (my_node == NULL) {
@@ -677,9 +673,11 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 		return -ENOENT;
 	}
 	
+	/*
 	if (strcmp( strstr(path, "."), strstr(my_node->name, ".") ) != 0) {
 		strcat(fpath, strstr(path, "."));
 	}
+	*/
 	
 	FSLog(fpath);
 	FSLog("Before real open");
