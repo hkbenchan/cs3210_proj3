@@ -1068,27 +1068,22 @@ void ypfs_destroy(void *userdata) {
 
 
 struct fuse_operations ypfs_oper = {
-    .init        = ypfs_init,
-    .destroy     = ypfs_destroy,
-    .getattr     = ypfs_getattr,
-    .readlink    = ypfs_readlink,
-    .readdir     = ypfs_readdir,
-    .mknod       = ypfs_mknod,
-    .mkdir       = ypfs_mkdir,
-    .symlink     = ypfs_symlink,
-    .unlink      = ypfs_unlink,
-    .rmdir       = ypfs_rmdir,
-    .rename      = ypfs_rename,
-    .truncate    = ypfs_truncate,
-    .utimens     = ypfs_utimens,
-    .create      = ypfs_create,
-    .open        = ypfs_open,
-    .read        = ypfs_read,
-    .write       = ypfs_write,
-    .statfs      = ypfs_statfs,
-    .release     = ypfs_release,
-    .opendir     = ypfs_opendir,
-    .releasedir  = ypfs_releasedir,
+    .getattr	= ypfs_getattr,
+	.readdir	= ypfs_readdir,
+	.open		= ypfs_open,
+	.read		= ypfs_read,
+	.create		= ypfs_create,
+	.write		= ypfs_write,
+	.utimens	= ypfs_utimens,
+	.mknod		= ypfs_mknod,
+	.release	= ypfs_release,
+	.truncate	= ypfs_truncate,
+	.unlink		= ypfs_unlink,
+	.rename		= ypfs_rename,
+	.mkdir		= ypfs_mkdir,
+	.opendir	= ypfs_opendir,
+	.init		= ypfs_init,
+	.destroy	= ypfs_destroy
 };
 
 int main(int argc, char *argv[])
