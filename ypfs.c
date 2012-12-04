@@ -1023,7 +1023,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	// 	return fd;
 	
 	//return ypfs_open(path, fi);
-	return fd;
+	return 0;
 /*
 
 
