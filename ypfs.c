@@ -954,7 +954,7 @@ int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
 int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
     int ret = 0, i, num_slashes = 0;
-	struct YP_NODE *my_node;
+	// struct YP_NODE *my_node;
  	char fpath[MAX_PATH_LENGTH], *filename = (char *)path;
  	int fd;
 
@@ -978,10 +978,10 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 
 	FSLog("Create test pass");
 	
-	my_node = new_node(filename, YP_PIC, NULL);
-	if (my_node != NULL)
-		add_child(root_node, my_node);
-
+	// my_node = new_node(filename, YP_PIC, NULL);
+	// 	if (my_node != NULL)
+	// 		add_child(root_node, my_node);
+	create_node_from_path(path, YP_PIC, NULL);
 /*
 
 
