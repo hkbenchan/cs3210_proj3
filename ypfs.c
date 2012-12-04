@@ -373,7 +373,7 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		// convert here, so file 1324242 becomes 1324242.png
 		// convert_img(my_node_no_ext, path);
 		// for stat later in function
-		strcat(fpath, strstr(path, '.'));
+		strcat(fpath, strchr(path, '.'));
 	}
 	memset(stbuf, 0, sizeof(struct stat));
 	
