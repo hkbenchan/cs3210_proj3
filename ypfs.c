@@ -334,7 +334,7 @@ struct YP_NODE* search_node_no_extension(const char *path) {
 }
 
 struct YP_NODE* create_node_from_path(const char *path, YP_TYPE type, char *hash) {
-	return node_resolver((char *)path, root_node, 1, type, hash, 1);
+	return node_resolver((char *)path, root_node, 1, type, hash, 0);
 }
 
 
