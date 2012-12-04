@@ -78,6 +78,11 @@ static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
 
 }
 
+static void ypfs_switchpath(char fpath[MAX_PATH_LENGTH], const char *path)
+{
+	strcpy(fpath, "/tmp/ypfs");
+	strncat(fpath, path, MAX_PATH_LENGTH);
+}
 
 void FSLogFlush()
 {
@@ -386,10 +391,11 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 	my_node_no_ext = search_node_no_extension(path);
 	
 	if (my_node_no_ext == NULL) {
+		FSLog("getattr no_ext NULL");
 		return -ENOENT;
 	}
 	
-	ypfs_fullpath(fpath, my_node_no_ext->name);
+	ypfs_switchpath(fpath, my_node_no_ext->name);
 	
 	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
 		// convert here, so file 1324242 becomes 1324242.png
@@ -410,10 +416,10 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 	} else if (my_node_no_ext != NULL && my_node != my_node_no_ext) {
 		// get attr for non-original file ext
 		ret = stat(fpath, stbuf);
-		stbuf->st_mode = S_IFREG | 0444;
+		stbuf->st_mode = S_IFREG | 0666;
 	} else if (my_node_no_ext != NULL) {
 		ret = stat(fpath, stbuf);
-		stbuf->st_mode = S_IFREG | 0444;
+		stbuf->st_mode = S_IFREG | 0666;
 	} else {
 		ret = -ENOENT;
 	}
@@ -545,7 +551,7 @@ int ypfs_unlink(const char *path)
 	FSLog("unlink");
 	FSLog(path);
 
-	ypfs_fullpath(fpath, path);
+	ypfs_switchpath(fpath, path);
 	
 	if (f_node != NULL)
 		remove_node(f_node);
@@ -633,7 +639,7 @@ int ypfs_truncate(const char *path, off_t newsize)
 	FSLog("truncate");
 	FSLog(path);
 	
-	ypfs_fullpath(fpath, path);
+	ypfs_switchpath(fpath, path);
 	
 	if (f_node != r_node) {
 		strcat(fpath, strchr(path, '.'));
@@ -687,8 +693,6 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	struct YP_NODE *my_node;
 	FSLog("open");
 	FSLog(path);
-	ypfs_fullpath(fpath, path);
-	FSLog(fpath);
 	
 	my_node = search_node_no_extension(path);
 	
@@ -702,14 +706,14 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 		strcat(fpath, strstr(path, "."));
 	}
 	*/
-	
-	FSLog(fpath);
+	ypfs_switchpath(fpath, path);
 	FSLog("Before real open");
+	FSLog(fpath);
 	if (fi == NULL) {
 		FSLog("FI is NULL");
 	}
 	//fd = open(fpath, fi->flags, 0666);
-	fd = open("/tmp/ypfs/a.txt", fi->flags, 0666);
+	fd = open(fpath, fi->flags, 0666);
 	
 	if (fd < 0) {
 		ret = -errno;
@@ -801,7 +805,7 @@ int ypfs_statfs(const char *path, struct statvfs *statv)
     // 	    path, statv);
 	FSLog("statfs");
 	FSLog(path);
-    ypfs_fullpath(fpath, path);
+    ypfs_switchpath(fpath, path);
     //     
     // get stats for underlying filesystem
     ret = statvfs(fpath, statv);
@@ -979,7 +983,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 
 	FSLog("Create");
 	FSLog(path);
-	ypfs_fullpath(fpath, path);
+	ypfs_switchpath(fpath, path);
 	FSLog(fpath);
 	
 	while(*filename != '\0') filename++;
@@ -1007,16 +1011,19 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	// 		add_child(root_node, my_node);
 	create_node_from_path(path, YP_PIC, NULL);
 	FSLog("creat");
-	// fd = creat("/tmp/ypfs/a.txt", mode);
+	fd = creat(fpath, mode);
 	// 	FSLog("creat pass");
-	// 	if (fd < 0)
-	// 		return -errno;
+	if (fd < 0) {
+		FSLog("fd fail");
+		return -errno;
+	}
 	// 		
 	// 	fi->fh = fd;
 	// 	
 	// 	return fd;
 	
-	return ypfs_open(path, fi);
+	//return ypfs_open(path, fi);
+	return fd;
 /*
 
 
