@@ -686,7 +686,7 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 		FSLog("FI is NULL");
 	}
 	//fd = open(fpath, fi->flags, 0666);
-	fd = open("/tmp/ypfs/a.txt", fi->flags);
+	fd = open("/tmp/ypfs/a.txt", fi->flags, 0666);
 	
 	if (fd < 0) {
 		ret = -errno;
@@ -992,16 +992,16 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	// 		add_child(root_node, my_node);
 	create_node_from_path(path, YP_PIC, NULL);
 	FSLog("creat");
-	fd = creat("/tmp/ypfs/a.txt", mode);
-	FSLog("creat pass");
-	if (fd < 0)
-		return -errno;
-		
-	fi->fh = fd;
+	// fd = creat("/tmp/ypfs/a.txt", mode);
+	// 	FSLog("creat pass");
+	// 	if (fd < 0)
+	// 		return -errno;
+	// 		
+	// 	fi->fh = fd;
+	// 	
+	// 	return fd;
 	
-	return fd;
-	
-	//return ypfs_open(path, fi);
+	return ypfs_open(path, fi);
 /*
 
 
