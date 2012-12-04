@@ -43,7 +43,7 @@ in base64
 #include <libexif/exif-data.h>
 #include <curl/curl.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #define SERCET_LOCATION "/tmp/ypfs/.config"
 #define MAX_PATH_LENGTH 500
 
