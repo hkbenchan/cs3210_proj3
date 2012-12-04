@@ -681,7 +681,7 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	
 	FSLog(fpath);
 	FSLog("Before real open");
-	//fd = open(fpath, fi->flags, 0666);
+	fd = open(fpath, fi->flags, 0666);
 	if (fd < 0) {
 		ret = -errno;
 		FSLog("Fail in fd open");
