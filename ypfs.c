@@ -672,18 +672,20 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	
 	my_node = search_node_no_extension(path);
 	
-	if (my_node != NULL) {
+	if (my_node == NULL) {
+		FSLog("Null my node");
 		return -ENOENT;
 	}
 	
 	if (strcmp( strstr(path, "."), strstr(my_node->name, ".") ) != 0) {
-		strcat(fpath, strstr(my_node->name, "."));
+		strcat(fpath, strstr(path, "."));
 	}
 	
 	fd = open(fpath, fi->flags, 0666);
-	if (fd < 0)
+	if (fd < 0) {
 		ret = -errno;
-	
+		FSLog("Fail in fd open");
+	}
     fi->fh = fd;
 
 	my_node->open_count++;

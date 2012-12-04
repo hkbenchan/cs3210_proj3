@@ -20,3 +20,6 @@ update:
 clean:
 	rm -f *.o
 	rm -f $(targets)
+
+clog:
+	echo > /tmp/ypfs/log
