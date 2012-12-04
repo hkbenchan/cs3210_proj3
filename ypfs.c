@@ -689,7 +689,7 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
     fi->fh = fd;
 
 	my_node->open_count++;
-
+	FSLog("open done");
     return ret;
 }
 
