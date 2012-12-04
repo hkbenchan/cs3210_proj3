@@ -338,7 +338,28 @@ struct YP_NODE* create_node_from_path(const char *path, YP_TYPE type, char *hash
 	return node_resolver((char *)path, root_node, 1, type, hash, 0);
 }
 
+void print_tree(struct YP_NODE* head, const char *pre) {
+	char preN[20];
+	char path_name[100];
+	int i;
+	sprintf(preN, "%s-", pre);
+	sprintf(path_name, "%s%s", preN, head->name);
+	FSLog(path_name);
+	for (int i=0; i<head->no_child; i++) {
+		print_tree(head->children[i], preN);
+	}
+	
+}
 
+void print_full_tree() {
+	int i;
+	FSLog("Print tree");
+	FSLog(root_node->name);
+	for (int i=0; i<root_node->no_child; i++) {
+		print_tree(root_node->children[i], "-");
+	}
+	FSLog("End of Print");
+}
 
 ///////////////////////////////////////////////////////////
 //
@@ -880,22 +901,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				ypfs_rename(path, new_name);
 
 			}
-		// }
-		//ypfs_rename(path, "/lol");
-		//
-
-		/*if (file_node->last_edited_ext){
-		char new_path[1024];
-		strcpy(new_path, path);
-		strcpy(string_after_char(new_path, '.'), file_node->last_edited_ext);
-		mylog("about to clean up conversions");
-		mylog(new_path);
-		cleanup_conversions(new_path);
-
-
-		free(file_node->last_edited_ext);
-		file_node->last_edited_ext = NULL;
-	}*/
+		//}
 	}
 
 	return 0;
@@ -981,6 +987,11 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 			num_slashes++;
 	}
 	
+	if (strcmp(filename, "debugtree") == 0) {
+		print_full_tree();
+		return -1;
+	}
+	
 	if (num_slashes > 1 || strstr(path, "/ypfs")) {
 		return -1;
 	}
@@ -1005,11 +1016,6 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 /*
 
 
-
-	if (0 == strcmp(end, "debugtree")) {
-	print_full_tree();
-	return -1;
-	}
 
 	if (0 == strcmp(end, "debugtwitter")) {
 	num_urls = twitter_get_img_urls("team_initrd", urls, 128);
