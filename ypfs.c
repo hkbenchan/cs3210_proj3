@@ -1129,7 +1129,7 @@ int main(int argc, char *argv[])
 	strcpy(ypfs_data->username ,username);
 	
 	root_node = new_node("/", YP_DIR, NULL);
-	create_node_for_path("/ypfs", YP_DIR, NULL);
+	create_node_from_path("/ypfs", YP_DIR, NULL);
 	
 	FSLog("about to call fuse_main");
     fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
