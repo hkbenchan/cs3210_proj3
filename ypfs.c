@@ -404,7 +404,7 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		strcat(fpath, strchr(path, '.'));
 	}
 	memset(stbuf, 0, sizeof(struct stat));
-	
+	FSLog(fpath);
 	if (my_node_no_ext->type == YP_DIR && strstr(path, "ypfs")) {
 		// temp/ypfs/{some_dir}
 		stbuf->st_mode = S_IFDIR | 0755;
