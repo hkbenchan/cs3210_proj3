@@ -1570,7 +1570,7 @@ int main(int argc, char *argv[])
 	}
 	
 	//test_bio();
-	bio_encode(fh, fh_o);
+	//bio_encode(fh, fh_o);
 	//printf("exit curl_test");
 
 	
@@ -1606,12 +1606,12 @@ int main(int argc, char *argv[])
 	//if (fh != )
 	
 	
-	my_curl_photo_upload("test_123.jpg","hello world");
+	//my_curl_photo_upload("test_123.jpg","hello world");
 	
 	
 	
 	
-	return 0;
+	//return 0;
 	ypfs_data = malloc(sizeof(struct ypfs_session));
 	
 	if (ypfs_data == NULL) {
