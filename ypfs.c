@@ -250,12 +250,12 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 		return ;
 	}
 	
-	tmp_child_list = parent->children;
-	tmp_no_child = parent->no_child;
-	
-	if (tmp_no_child < 1) {
+	if (parent->no_child < 1) {
 		FSLog("Parent has no child");
 	} else {
+		tmp_child_list = parent->children;
+		tmp_no_child = parent->no_child;
+		
 		parent->children = malloc((tmp_no_child-1)*sizeof(struct YP_NODE*));
 
 		for (i=0; i<tmp_no_child; i++) {
@@ -267,7 +267,7 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 
 		parent->no_child = tmp_no_child-1;
 
-		free(tmp_child_list);
+		//free(tmp_child_list);
 
 		if (child->name)
 			free(child->name);
@@ -888,8 +888,8 @@ int ypfs_rename2(const char *path, const char *newpath)
 		new_n->private = 1;
 	}
 		
-	//if (new_n != old_n)
-	//	remove_node(old_n);
+	if (new_n != old_n)
+		remove_node(old_n);
 		
 	//ypfs_fullpath(fpath, path);
 	//ypfs_fullpath(fnewpath, newpath);
