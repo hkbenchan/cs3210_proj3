@@ -256,24 +256,30 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 		tmp_child_list = parent->children;
 		tmp_no_child = parent->no_child;
 		
-		parent->children = malloc((tmp_no_child-1)*sizeof(struct YP_NODE*));
+		if (tmp_no_child == 1) {
+			parent->children = NULL;
+		} else {
+			parent->children = malloc((tmp_no_child-1)*sizeof(struct YP_NODE*));
 
-		for (i=0; i<tmp_no_child; i++) {
-			if (tmp_child_list[i] != child) {
-				(parent->children)[active] = tmp_child_list[i];
-				active++;
+			for (i=0; i<tmp_no_child; i++) {
+				if (tmp_child_list[i] != child) {
+					(parent->children)[active] = tmp_child_list[i];
+					active++;
+				}
 			}
-		}
+		}	
 
 		parent->no_child = tmp_no_child-1;
 
-		//free(tmp_child_list);
+		free(tmp_child_list);
 
-		if (child->name)
+		/*if (child->name)
 			free(child->name);
-
+		
+		
 		if (child)
 			free(child);
+		*/
 	}
 		
 }
