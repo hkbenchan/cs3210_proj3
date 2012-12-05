@@ -1562,7 +1562,7 @@ int main(int argc, char *argv[])
 	my_curl_register();
 	
 	// test upload photo
-	my_curl_photo_upload("test.jpg","hello world");
+	my_curl_photo_upload("test_123.jpg","hello world");
 	return 0;
 	ypfs_data = malloc(sizeof(struct ypfs_session));
 	
