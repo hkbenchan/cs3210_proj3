@@ -717,6 +717,7 @@ int ypfs_symlink(const char *path, const char *link)
 int ypfs_rename(const char *path, const char *newpath)
 {
 	struct YP_NODE *old_n, *new_n;
+	char o_path[MAX_PATH_LENGTH], n_path[MAX_PATH_LENGTH];
 	FSLog("rename");
 	FSLog(path);
 	FSLog(newpath);
@@ -727,7 +728,8 @@ int ypfs_rename(const char *path, const char *newpath)
 		return -ENOENT;	
 	}
 	
-	// have to redo path
+	ypfs_switchpath(o_path, old_n->name);
+	ypfs_switchpath(n_path, newpath);
 	
 	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
 	
@@ -764,6 +766,11 @@ int ypfs_rename(const char *path, const char *newpath)
 	
 	if (new_n != old_n)
 		remove_node(old_n);
+	FSLog("Move file from: ");
+	FSLog(o_path);
+	FSLog("Move file to: ");
+	FSLog(n_path);
+	rename(o_path, n_path);
 	
 	ypfs_release(newpath, NULL);
 	
@@ -1072,7 +1079,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				FSLog("Inside num_slashes");
 				struct stat sb;
 				struct tm * pic_time;
-				
+				FSLog(fpath);
 				if (stat(fpath, &sb) == -1) {
 				        perror("stat");
 				        exit(EXIT_FAILURE);
