@@ -1172,6 +1172,8 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
 				fprintf(stderr, "***********Release - no exif, %s\n",new_name);
 
+			} else {
+				sprintf(newname, "%s", path);
 			}
 		}
 		
