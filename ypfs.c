@@ -1558,7 +1558,9 @@ int main(int argc, char *argv[])
 	int i;
 	//FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg",'r');
 	char *data;
-	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/a.log", "r"), fh_o = fopen("/nethome/hchan35/source_code/cs3210_proj3/b.log", "w");
+	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/a.log", "r");
+	FILE* fh_o = fopen("/nethome/hchan35/source_code/cs3210_proj3/b.log", "w");
+	
 	if (DEBUG == 0)
 		FSLogFlush();
 	
