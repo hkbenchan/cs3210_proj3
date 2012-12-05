@@ -462,7 +462,7 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 	int type;
 	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", tmp, &type, &(cur->no_child), &(cur->open_count), &(cur->private));
 	
-	cur->type = (YP_TYPE)type;
+	cur->type =  (type == 1? YP_PIC: YP_DIR);
 	
 	if (cur->name) {
 		free(cur->name);
@@ -498,7 +498,8 @@ void deserialize() {
 void _serialize(struct YP_NODE* cur, FILE *serial_fh) {
 	int i;
 	
-	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", cur->name, (int)cur->type, cur->no_child, cur->open_count, cur->private);
+	FSLog(cur->name);
+	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", cur->name, cur->type == YP_PIC? 1:0, cur->no_child, cur->open_count, cur->private);
 	
 	for (i=0; i< cur->no_child; i++) {
 		_serialize(cur->children[i], serial_fh);
