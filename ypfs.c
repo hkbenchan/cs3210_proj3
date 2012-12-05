@@ -406,8 +406,11 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 			n++;
 		}
 		compare_name[n] = '\0';
-		if (strcmp(name, compare_name) == 0)
+		if (strcmp(name, compare_name) == 0) {
+			fprintf(stderr, "In %s, node %s found, go inside found child\n", cur->name, (cur->children[i])->name);
 			return node_resolver(path, cur->children[i], create, type, skip_ext); // search it inside this child
+		}
+			
 		*compare_name = '\0';
 	}
 
@@ -879,7 +882,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 	}
 			
 	new_n = create_node_from_path(newpath, old_n->type);
-	fprintf(stderr, "rename2 after new node: %s\n", new_n->name);
+	fprintf(stderr, "rename2 after new node: %s %s\n", new_n->name, new_n->parent->name);
 	if (old_n->private == 1) {
 		FSLog("private set");
 		new_n->private = 1;
