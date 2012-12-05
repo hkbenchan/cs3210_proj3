@@ -187,6 +187,7 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type) {
 	
 	my_new_node->name = malloc(sizeof(char) * (strlen(path) + 1));
 	strcpy(my_new_node->name, path);
+	my_new_node[strlen(path)] = '\0';
 	my_new_node->type = type;
 	my_new_node->children = NULL;
 	my_new_node->parent = NULL;
@@ -511,7 +512,7 @@ void _serialize(struct YP_NODE* cur, FILE *serial_fh) {
 	
 	FSLog(cur->name);
 	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", cur->name, cur->type == YP_PIC? 1:0, cur->no_child, cur->open_count, cur->private);
-	
+	fprintf(stderr, "name: %s\n", cur->name);
 	for (i=0; i< cur->no_child; i++) {
 		_serialize(cur->children[i], serial_fh);
 	}
@@ -874,7 +875,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 	}
 			
 	new_n = create_node_from_path(newpath, old_n->type);
-	
+	fprintf(stderr, "rename2 after new node: %s\n", new_n->name);
 	if (old_n->private == 1) {
 		FSLog("private set");
 		new_n->private = 1;
