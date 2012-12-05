@@ -1351,7 +1351,7 @@ void *ypfs_init(struct fuse_conn_info *conn)
 	FSLog("init");
     //log_msg("\nbb_init()\n");
 	// read the tree data
-    
+	deserialize();
 	return (struct ypfs_session *)fuse_get_context()->private_data;
 }
 
