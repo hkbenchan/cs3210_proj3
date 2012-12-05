@@ -1484,7 +1484,7 @@ void my_curl_photo_upload(char *filename, char *b64string) {
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "action", CURLFORM_COPYCONTENTS, "upload", CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, "filename.jpg", CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "b64string", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
 	//headerlist = curl_slist_append(headerlist, buf);
 
@@ -1512,6 +1512,19 @@ void my_curl_photo_upload(char *filename, char *b64string) {
 
 
 
+void test_bio() {
+	BIO *bio, *b64;
+ 	char message[] = "Hello World \n";
+
+	b64 = BIO_new(BIO_f_base64());
+ 	bio = BIO_new_fp(stdout, BIO_NOCLOSE);
+ 	bio = BIO_push(b64, bio);
+ 	BIO_write(bio, message, strlen(message));
+ 	BIO_flush(bio);
+
+ 	BIO_free_all(bio);
+ 
+}
 
 int main(int argc, char *argv[])
 {
@@ -1519,6 +1532,8 @@ int main(int argc, char *argv[])
 	struct ypfs_session *ypfs_data;
 	int fuse_ret = 0;
 	int i;
+	//FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg",'r');
+	char *data;
 	
 	if (DEBUG == 0)
 		FSLogFlush();
@@ -1528,7 +1543,7 @@ int main(int argc, char *argv[])
 		abort();
 	}
 	
-	
+	test_bio();
 	
 	//printf("exit curl_test");
 
@@ -1562,7 +1577,14 @@ int main(int argc, char *argv[])
 	my_curl_register();
 	
 	// test upload photo
+	//if (fh != )
+	
+	
 	my_curl_photo_upload("test_123.jpg","hello world");
+	
+	
+	
+	
 	return 0;
 	ypfs_data = malloc(sizeof(struct ypfs_session));
 	
