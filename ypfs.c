@@ -548,7 +548,7 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 	
 	my_node = search_node(path);
 	my_node_no_ext = search_node_no_extension(path);
-	
+	FSLog("search finish");
 	if (my_node_no_ext == NULL) {
 		FSLog("getattr no_ext NULL");
 		return -ENOENT;
@@ -556,7 +556,6 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 
 	//ypfs_switchpath(fpath, cut_extension(my_node_no_ext->name));
 	ypfs_switchpath(fpath, my_node_no_ext->name);
-	
 	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
 		
 		// for stat later in function
