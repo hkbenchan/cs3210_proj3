@@ -22,4 +22,4 @@ clean:
 	rm -f $(targets)
 
 clog:
-	echo > /tmp/ypfs/log
+	echo > /tmp/ypfs.log

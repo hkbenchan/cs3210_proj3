@@ -410,6 +410,8 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 
 	if (create == 1) {
 		// add a child to cur and continue the process
+		FSLog("add child");
+		FSLog(name);
 		return node_resolver(path, add_child(cur, new_node(name, last_node == 1 ? type : YP_DIR)), create, type, skip_ext);
 	}
 
