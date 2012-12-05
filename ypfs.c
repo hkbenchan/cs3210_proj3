@@ -626,10 +626,10 @@ int ypfs_unlink(const char *path)
 	FSLog("unlink");
 	FSLog(path);
 
-	ypfs_switchpath(fpath, path);
-	
-	if (f_node != NULL)
+	if (f_node != NULL) {
+		ypfs_switchpath(fpath, f_node->name);
 		remove_node(f_node);
+	}	
 	
 	ret = unlink(fpath);
 	if (ret < 0)
