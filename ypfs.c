@@ -1073,7 +1073,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				struct stat sb;
 				struct tm * pic_time;
 				
-				if (stat("/tmp/ypfs/a.txt", &sb) == -1) {
+				if (stat(fpath, &sb) == -1) {
 				        perror("stat");
 				        exit(EXIT_FAILURE);
 				}
