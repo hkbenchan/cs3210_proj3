@@ -780,7 +780,7 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 		strcat(fpath, strstr(path, "."));
 	}
 	*/
-	ypfs_switchpath(fpath, path);
+	ypfs_switchpath(fpath, my_node->name);
 	FSLog("Before real open");
 	FSLog(fpath);
 	if (fi == NULL) {
