@@ -986,7 +986,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			tmp_fh = fopen(fpath2, "w");
 			
 			FSLog("encrypt needed");
-			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != NULL ){
+			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != 0 ){
 				Encrypt(in, out);
 				fwrite(out, sizeof(char), AES_BLOCK_SIZE, tmp_fh);
 				memset(in, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
@@ -1001,7 +1001,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			tmp_fh = fopen(fpath2, "w");
 			
 			FSLog("decrypt now");
-			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != NULL ){
+			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != 0 ){
 				Decrypt(in, out);
 				fwrite(out, sizeof(char), AES_BLOCK_SIZE, tmp_fh);
 				memset(in, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
