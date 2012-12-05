@@ -722,7 +722,7 @@ int ypfs_rename(const char *path, const char *newpath)
 	FSLog(path);
 	FSLog(newpath);
 	old_n = search_node(path);
-	old_n_no_ext = search_node_no_extension(path);
+
 	if (old_n == NULL) {
 		FSLog("old n null");
 		return -ENOENT;	
