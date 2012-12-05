@@ -1484,7 +1484,7 @@ void my_curl_photo_upload(char *filename, char *b64string) {
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "action", CURLFORM_COPYCONTENTS, "upload", CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, "filename.jpg", CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "b64string", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
 	//headerlist = curl_slist_append(headerlist, buf);
 
