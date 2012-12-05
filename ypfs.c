@@ -574,8 +574,9 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
 		
 		// for stat later in function
-		
-		strcat(fpath, strchr(path, '.'));
+		if (strchr(path, '.') != NULL)
+			strcat(fpath, strchr(path, '.'));
+			
 	} //else if (my_node_no_ext->type == YP_PIC){
 		//strcat(fpath, strchr(my_node_no_ext->name,'.'));
 	//}
@@ -1199,8 +1200,8 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			rename(fpath2, fpath);
 			
 		}
-		
-		ypfs_rename2(path, new_name);
+		fprintf(stderr "before rename2 %s %s\n", path, fpath);
+		ypfs_rename2(fpath, new_name);
 
 	}
 	FSLog("End of release");
