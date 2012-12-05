@@ -1280,20 +1280,20 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	while(*filename != '\0') filename++;
 	while(*filename != '/' && filename >= path) filename--;
 	if (*filename == '/') filename++;
-		// 
-		// for (i = 0; i< strlen(path); i++) {
-		// 	if (path[i] == '/')
-		// 		num_slashes++;
-		// }
-	
+		
+	for (i = 0; i< strlen(path); i++) {
+		if (path[i] == '/')
+			num_slashes++;
+	}
+
 	if (strcmp(filename, "debugtree") == 0) {
 		print_full_tree();
 		return -1;
 	}
 	
-	// if (num_slashes > 1 || strstr(path, "/ypfs")) {
-	// 		return -1;
-	// 	}
+	if (num_slashes > 1 || strstr(path, "/ypfs")) {
+		return -1;
+	}
 	
 	fprintf(stderr, "***********Create test pass\n");
 	
