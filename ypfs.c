@@ -744,7 +744,7 @@ int ypfs_rename(const char *path, const char *newpath)
 		uchar in[2 * AES_BLOCK_SIZE], out[2 * AES_BLOCK_SIZE];
 		
 		FSLog("Decrypt needed");
-		ypfs_switchpath(fpath, newpath);
+		ypfs_switchpath(fpath, path);
 		
 		strcpy(fpath2, fpath);
 		strcat(fpath2, "tmp");
