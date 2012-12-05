@@ -493,16 +493,17 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		return -ENOENT;
 	}
 
-	ypfs_switchpath(fpath, cut_extension(my_node_no_ext->name));
+	//ypfs_switchpath(fpath, cut_extension(my_node_no_ext->name));
+	ypfs_switchpath(fpath, my_node_no_ext->name);
 	
 	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
 		
 		// for stat later in function
 		
 		strcat(fpath, strchr(path, '.'));
-	} else if (my_node_no_ext->type == YP_PIC){
-		strcat(fpath, strchr(my_node_no_ext->name,'.'));
-	}
+	} //else if (my_node_no_ext->type == YP_PIC){
+		//strcat(fpath, strchr(my_node_no_ext->name,'.'));
+	//}
 	
 	memset(stbuf, 0, sizeof(struct stat));
 	FSLog(fpath);
@@ -715,7 +716,7 @@ int ypfs_rename(const char *path, const char *newpath)
 {
 	struct YP_NODE *old_n, *new_n;
 	FSLog("rename");
-	
+	FSLog(path);
 	old_n = search_node(path);
 	
 	if (old_n == NULL) {
@@ -727,6 +728,7 @@ int ypfs_rename(const char *path, const char *newpath)
 	
 	if (new_n != old_n)
 		remove_node(old_n);
+		
 	//ypfs_fullpath(fpath, path);
 	//ypfs_fullpath(fnewpath, newpath);
 	FSLog("end of rename");
