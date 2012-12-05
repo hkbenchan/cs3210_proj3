@@ -997,6 +997,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			unlink(fpath);
 			rename(fpath2, fpath);
 			
+		} /*else {
 			fh = fopen(fpath, "r");
 			tmp_fh = fopen(fpath2, "w");
 			
@@ -1011,8 +1012,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			FSLog("Done decrypt");
 			unlink(fpath);
 			rename(fpath2, fpath);
-			
-		}
+		}*/
 		
 		ed = exif_data_new_from_file(fpath);
 		if (ed) {
