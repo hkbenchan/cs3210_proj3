@@ -748,6 +748,10 @@ int ypfs_rename(const char *path, const char *newpath)
 		
 		strcpy(fpath2, fpath);
 		strcat(fpath2, "tmp");
+		FSLog("fpath");
+		FSLog(fpath);
+		FSLog("fpath2");
+		FSLog(fpath2);
 		
 		fh = fopen(fpath, "r");
 		tmp_fh = fopen(fpath2, "w");
