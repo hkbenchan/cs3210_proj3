@@ -48,7 +48,7 @@ in base64
 #define DEBUG 0
 #define SERCET_LOCATION "/tmp/.config_ypfs"
 #define LOGFILE_LOCATION "/tmp/ypfs.log"
-#define TREE_LOCATION "/tmp/.ypfs/tree"
+#define TREE_LOCATION "/tmp/ypfs.tree"
 
 #define MAX_PATH_LENGTH 500
 
@@ -506,7 +506,6 @@ void serialize() {
 	FILE* serial_fh;
 	FSLog("serializing...");
 	serial_fh = fopen(TREE_LOCATION,"w");
-	//fclose(serial_fh);
 	if (serial_fh != NULL) {
 		_serialize(root_node, serial_fh);
 		fclose(serial_fh);
