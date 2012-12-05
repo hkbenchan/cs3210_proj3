@@ -716,7 +716,7 @@ int ypfs_symlink(const char *path, const char *link)
 // both path and newpath are fs-relative
 int ypfs_rename(const char *path, const char *newpath)
 {
-	struct YP_NODE *old_n, *new_n, *old_n_no_ext;
+	struct YP_NODE *old_n, *new_n;
 	char o_path[MAX_PATH_LENGTH], n_path[MAX_PATH_LENGTH];
 	FSLog("rename");
 	FSLog(path);
@@ -735,7 +735,7 @@ int ypfs_rename(const char *path, const char *newpath)
 	
 	new_n->open_count++;
 		
-	if (old_n_no_ext->private == 1 && (strstr(str_c(newpath,'.'),"+private") == NULL)) {
+	if (old_n->private == 1 && (strstr(str_c(newpath,'.'),"+private") == NULL)) {
 		// need to decrypt image
 		char *ext = str_c(path, '.');
 		char fpath2[MAX_PATH_LENGTH];
@@ -760,7 +760,7 @@ int ypfs_rename(const char *path, const char *newpath)
 		FSLog("Done decrypt");
 		unlink(fpath);
 		rename(fpath2, fpath);
-	} else if (old_n_no_ext->private == 1) {
+	} else if (old_n->private == 1) {
 		FSLog("found private in both old and new path");
 	} else if (strstr(str_c(newpath,'.'),"+private") == NULL) {
 		FSLog("private not found in private old and new path");
