@@ -1024,8 +1024,6 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			}
 		}
 		
-		ypfs_rename(path, new_name);
-		
 		// check if encrypt is needed
 		if (strstr(ext, "+private") && f_node->private == 0) {
 			
@@ -1065,6 +1063,8 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			rename(fpath2, fpath);
 		}*/
 		
+		ypfs_rename(path, new_name);
+
 	}
 	FSLog("End of release");
 	return ret;
