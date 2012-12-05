@@ -373,7 +373,7 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 	char *curr_char;
 	int n = 0;
 
-	// fprintf(stderr, "***********node_resolver: %s", path);
+	fprintf(stderr, "***********node_resolver: %s\n", path);
 
 	if (cur == NULL) {
 		fprintf(stderr, "***********node for path: NULL cur\n");
@@ -397,7 +397,7 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 		fprintf(stderr, "***********Last node\n");
 	}
 	if (i == 0) {
-		fprintf(stderr, "***********return cur\n");
+		fprintf(stderr, "***********return cur %s\n", cur->name);
 		return cur;
 	}
 
