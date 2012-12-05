@@ -1514,40 +1514,38 @@ void my_curl_photo_upload(char *filename, char *b64string) {
 
 
 
-void test_bio() {
+void bio_encode(FILE* fh_in, FILE* fh_out) {
 	BIO *bio, *b64, *bio_out;
-	FILE* fh = fopen("a.log", "r");
+	//FILE* fh = fopen("a.log", "r");
+	
  	//char message[] = "SGVsbG8gV29ybGQgCg==\n";
 	/*char *answer = malloc(sizeof(char) * 10000);
 	
-	if (fh != NULL) {
+	if ((fh_in != NULL)  && (fh_out != NULL){
 		b64 = BIO_new(BIO_f_base64());
 	 	bio = BIO_new_fp(fh, BIO_NOCLOSE);
 	 	bio = BIO_push(b64, bio);
-	 	BIO_write(bio, message, strlen(message));
+	 	while ((inlen = BIO_read(bio, message, 512)) > 0)
+			BIO_write(bio_out, inbuf, inlen);
 	 	BIO_flush(bio);
-
 	 	BIO_free_all(bio);
-		
-		fprint(stderr, "test bio: %s\n", answer);
 	}
 	*/
  	char inbuf[512];
  	int inlen;
-	if (fh != NULL) {
+	if (fh_in != NULL && fh_out != NULL) {
 		b64 = BIO_new(BIO_f_base64());
-	 	bio = BIO_new_fp(fh, BIO_NOCLOSE);
-	 	bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
+	 	bio = BIO_new_fp(fh_in, BIO_NOCLOSE);
+	 	bio_out = BIO_new_fp(fh_out, BIO_NOCLOSE);
 	 	bio = BIO_push(b64, bio);
 	 	while((inlen = BIO_read(bio, inbuf, 512)) > 0)
 	        BIO_write(bio_out, inbuf, inlen);
 
 	 	BIO_free_all(bio);
+	
+		fclose(fh_in); fclose(fh_out);
 	}
  	
-	if (fh != NULL) {
-		fclose(fh);
-	}
 	//free(answer);
 	
 }
@@ -1560,7 +1558,7 @@ int main(int argc, char *argv[])
 	int i;
 	//FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg",'r');
 	char *data;
-	
+	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/a.log", "r"), fh_o = fopen("/nethome/hchan35/source_code/cs3210_proj3/b.log", "w");
 	if (DEBUG == 0)
 		FSLogFlush();
 	
@@ -1569,8 +1567,8 @@ int main(int argc, char *argv[])
 		abort();
 	}
 	
-	test_bio();
-	
+	//test_bio();
+	bio_encode(fh, fh_o);
 	//printf("exit curl_test");
 
 	
