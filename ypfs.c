@@ -1424,7 +1424,7 @@ static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *stream)
 	return retcode;
 }
 
-void my_little_curl_test() {
+void my_little_curl_register() {
 	struct curl_httppost* post = NULL;  
 	struct curl_httppost* last = NULL;  
 	long http_code = 0;
