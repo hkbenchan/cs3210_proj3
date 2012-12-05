@@ -500,7 +500,10 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		// for stat later in function
 		
 		strcat(fpath, strchr(path, '.'));
+	} else {
+		strcat(fpath, strchr(my_node_no_ext->name,'.'));
 	}
+	
 	memset(stbuf, 0, sizeof(struct stat));
 	FSLog(fpath);
 	if (my_node_no_ext->type == YP_DIR && strstr(path, "ypfs")) {
