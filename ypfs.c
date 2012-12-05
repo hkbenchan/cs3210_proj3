@@ -195,7 +195,7 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type) {
 	my_new_node->open_count = 0;
 	my_new_node->private = 0;
 	
-	fprintf(stderr, "New node created with name: %s\n", my_new_node->name);
+	fprintf(stderr, "***********New node created with name: %s\n", my_new_node->name);
 	
 	/*
 	my_new_node->hash = NULL;
@@ -217,7 +217,7 @@ struct YP_NODE* add_child(struct YP_NODE *parent, struct YP_NODE *child) {
 	int i;
 	
 	if (parent == NULL) {
-		fprintf(stderr, "Add child to a null parent");
+		fprintf(stderr, "***********Add child to a null parent\n");
 		return NULL;
 	}
 	
@@ -246,19 +246,19 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 	int i, active = 0;
 	
 	if (parent == NULL) {
-		fprintf(stderr, "Remove child to a null parent");
+		fprintf(stderr, "***********Remove child to a null parent\n");
 		return ;
 	}
 	
 	if (parent->no_child < 1) {
-		fprintf(stderr, "Parent has no child");
+		fprintf(stderr, "***********Parent has no child\n");
 	} else {
 		tmp_child_list = parent->children;
 		tmp_no_child = parent->no_child;
 		
 		if (tmp_no_child == 1) {
 			parent->children = NULL;
-			fprintf(stderr, "**********Remove child: parent %s now have 0 child", parent->name);
+			fprintf(stderr, "***********Remove child: parent %s now have 0 child\n", parent->name);
 		} else {
 			parent->children = malloc((tmp_no_child-1)*sizeof(struct YP_NODE*));
 
@@ -284,7 +284,7 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 }
 
 void remove_node(struct YP_NODE *node) {
-	fprintf(stderr, "*******Remove node %s from parent %s", node->name, node->parent->name);
+	fprintf(stderr, "***********Remove node %s from parent %s\n", node->name, node->parent->name);
 	remove_child(node->parent, node);
 }
 
@@ -298,7 +298,7 @@ void remove_self_and_children_file(struct YP_NODE *parent) {
 	
 	// remove self file
 	ypfs_switchpath(absolute_path, parent->name);
-	fprintf(stderr, "remove: %s", absolute_path);
+	fprintf(stderr, "***********remove: %s\n", absolute_path);
 	
 	if (parent->type == YP_DIR)
 		rmdir(absolute_path);
@@ -307,9 +307,9 @@ void remove_self_and_children_file(struct YP_NODE *parent) {
 }
 
 void remove_copied_files() {
-	fprintf(stderr, "Start removing...");
+	fprintf(stderr, "***********Start removing...\n");
 	remove_self_and_children_file(root_node);
-	fprintf(stderr, "Finish removing...");
+	fprintf(stderr, "***********Finish removing...\n");
 }
 
 int path_depth(const char *path) {
@@ -373,10 +373,10 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 	char *curr_char;
 	int n = 0;
 
-	// fprintf(stderr, "node_resolver: %s", path);
+	// fprintf(stderr, "***********node_resolver: %s", path);
 
 	if (cur == NULL) {
-		fprintf(stderr, "node for path: NULL cur");
+		fprintf(stderr, "***********node for path: NULL cur\n");
 	}
 		
 
@@ -394,10 +394,10 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 
 	if (*path == '\0') {
 		last_node = 1;
-		fprintf(stderr, "Last node");
+		fprintf(stderr, "***********Last node\n");
 	}
 	if (i == 0) {
-		fprintf(stderr, "return cur");
+		fprintf(stderr, "***********return cur\n");
 		return cur;
 	}
 
@@ -413,7 +413,7 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 		}
 		compare_name[n] = '\0';
 		if (strcmp(name, compare_name) == 0) {
-			fprintf(stderr, "In %s, node %s found, go inside found child %s\n", cur->name, (cur->children[i])->name, name);
+			fprintf(stderr, "***********In %s, node %s found, go inside found child %s\n", cur->name, (cur->children[i])->name, name);
 			return node_resolver(path, cur->children[i], create, type, skip_ext); // search it inside this child
 		}
 			
@@ -423,7 +423,7 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 
 	if (create == 1) {
 		// add a child to cur and continue the process
-		fprintf(stderr, "add child %s", name);
+		fprintf(stderr, "***********add child %s\n", name);
 		return node_resolver(path, add_child(cur, new_node(name, last_node == 1 ? type : YP_DIR)), create, type, skip_ext);
 	}
 
@@ -449,7 +449,7 @@ void print_tree(struct YP_NODE* head, const char *pre) {
 	int i;
 	sprintf(preN, "%s-", pre);
 	sprintf(path_name, "%s%s", preN, head->name);
-	fprintf(stderr,"%s\n",path_name);
+	fprintf(stderr, "***********%s\n",path_name);
 	for (i=0; i<head->no_child; i++) {
 		print_tree(head->children[i], preN);
 	}
@@ -458,11 +458,11 @@ void print_tree(struct YP_NODE* head, const char *pre) {
 
 void print_full_tree() {
 	int i;
-	fprintf(stderr, "Print tree\n%s\n", root_node->name);
+	fprintf(stderr, "***********Print tree\n%s\n", root_node->name);
 	for (i=0; i<root_node->no_child; i++) {
 		print_tree(root_node->children[i], "-");
 	}
-	fprintf(stderr, "End of Print");
+	fprintf(stderr, "***********End of Print\n");
 }
 
 
@@ -504,14 +504,14 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 
 void deserialize() {
 	FILE* serial_fh;
-	fprintf(stderr, "deserializing...");
+	fprintf(stderr, "***********deserializing...\n");
 	serial_fh = fopen(TREE_LOCATION, "r");
 	if (serial_fh != NULL) {
 		_deserialize(root_node, serial_fh);
 		fclose(serial_fh);
-		fprintf(stderr, "Finish deserializing");
+		fprintf(stderr, "***********Finish deserializing\n");
 	} else {
-		fprintf(stderr, "fail deserialize");
+		fprintf(stderr, "***********fail deserialize");
 	}
 }
 
@@ -520,9 +520,9 @@ void deserialize() {
 void _serialize(struct YP_NODE* cur, FILE *serial_fh) {
 	int i;
 	
-	fprintf(stderr, "_serialize %s\n", cur->name);
+	fprintf(stderr, "***********_serialize %s\n", cur->name);
 	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", cur->name, cur->type == YP_PIC? 1:0, cur->no_child, cur->open_count, cur->private);
-	fprintf(stderr, "name: %s\n", cur->name);
+	fprintf(stderr, "***********name: %s\n", cur->name);
 	for (i=0; i< cur->no_child; i++) {
 		_serialize(cur->children[i], serial_fh);
 	}
@@ -531,14 +531,14 @@ void _serialize(struct YP_NODE* cur, FILE *serial_fh) {
 
 void serialize() {
 	FILE* serial_fh;
-	fprintf(stderr, "serializing...");
+	fprintf(stderr, "***********serializing...");
 	serial_fh = fopen(TREE_LOCATION,"w");
 	if (serial_fh != NULL) {
 		_serialize(root_node, serial_fh);
 		fclose(serial_fh);
-		fprintf(stderr, "Finish serializing");
+		fprintf(stderr, "***********Finish serializing");
 	} else
-		fprintf(stderr, "Fail to serialize");
+		fprintf(stderr, "***********Fail to serialize");
 }
 
 
@@ -565,14 +565,14 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 	char fpath[MAX_PATH_LENGTH];
 	struct YP_NODE *my_node, *my_node_no_ext;
 
-	fprintf(stderr, "getattr: %s\n", path);
+	fprintf(stderr, "***********getattr: %s\n", path);
 
 	
 	my_node = search_node(path);
 	my_node_no_ext = search_node_no_extension(path);
-	fprintf(stderr, "search finish");
+	fprintf(stderr, "***********search finish\n");
 	if (my_node_no_ext == NULL) {
-		fprintf(stderr, "getattr no_ext NULL");
+		fprintf(stderr, "***********getattr no_ext NULL\n");
 		return -ENOENT;
 	}
 
@@ -589,7 +589,7 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 	//}
 	
 	memset(stbuf, 0, sizeof(struct stat));
-	fprintf(stderr, "getattr fpath: %s\n", fpath);
+	fprintf(stderr, "***********getattr fpath: %s\n", fpath);
 	if (my_node_no_ext->type == YP_DIR && strstr(path, "ypfs")) {
 		// temp/ypfs/{some_dir}
 		stbuf->st_mode = S_IFDIR | 0755;
@@ -602,13 +602,13 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		// get attr for non-original file ext
 		ret = stat(fpath, stbuf);
 		stbuf->st_mode = S_IFREG | 0666;
-		fprintf(stderr, "attr non-original file ext");
+		fprintf(stderr, "***********attr non-original file ext\n");
 	} else if (my_node_no_ext != NULL) {
 		ret = stat(fpath, stbuf);
 		stbuf->st_mode = S_IFREG | 0666;
-		fprintf(stderr, "attr exists");
+		fprintf(stderr, "***********attr exists\n");
 	} else {
-		fprintf(stderr, "attr fail");
+		fprintf(stderr, "***********attr fail\n");
 		ret = -ENOENT;
 	}
 		
@@ -647,7 +647,7 @@ int ypfs_readlink(const char *path, char *link, size_t size)
 	ret = 0;
     }
 
-	fprintf(stderr, "readlink");
+	fprintf(stderr, "***********readlink");
     return ret;
 }
 */
@@ -661,7 +661,7 @@ int ypfs_readlink(const char *path, char *link, size_t size)
 int ypfs_mknod(const char *path, mode_t mode, dev_t dev)
 {
     int ret = 0;
-	fprintf(stderr, "mknod");
+	fprintf(stderr, "***********mknod");
     return ret;
 }
 
@@ -670,7 +670,7 @@ int ypfs_mkdir(const char* path, mode_t mode){
 	int ret = 0;
 	//char fpath[MAX_PATH_LENGTH];
 	
-	fprintf(stderr, "mkdir: %s\n", path);
+	fprintf(stderr, "***********mkdir: %s\n", path);
 
 	//ypfs_fullpath(fpath, path);
 	
@@ -709,7 +709,7 @@ int ypfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     (void) offset;
     (void) fi;
 	struct YP_NODE *my_node;
-	fprintf(stderr, "readdir: %s\n", path);
+	fprintf(stderr, "***********readdir: %s\n", path);
 	
 	my_node = search_node(path);
 	
@@ -735,7 +735,7 @@ int ypfs_unlink(const char *path)
     int ret = 0;
 	char fpath[MAX_PATH_LENGTH];
 	struct YP_NODE *f_node = search_node(path);
-	fprintf(stderr, "unlink: %s\n", path);
+	fprintf(stderr, "***********unlink: %s\n", path);
 
 	if (f_node != NULL) {
 		ypfs_switchpath(fpath, f_node->name);
@@ -756,7 +756,7 @@ int ypfs_rmdir(const char *path)
 {
     int ret = 0;
  	char fpath[MAX_PATH_LENGTH];
-	fprintf(stderr, "rmdir: %s\n", path);
+	fprintf(stderr, "***********rmdir: %s\n", path);
  	
  	ypfs_fullpath(fpath, path);
  	//     
@@ -778,7 +778,7 @@ int ypfs_symlink(const char *path, const char *link)
 {
     int ret = 0;
 	char flink[MAX_PATH_LENGTH];
-	fprintf(stderr, "symlink");
+	fprintf(stderr, "***********symlink");
 	
 	ypfs_fullpath(flink, link);
 	 
@@ -796,11 +796,11 @@ int ypfs_rename(const char *path, const char *newpath)
 {
 	struct YP_NODE *old_n, *new_n;
 	char o_path[MAX_PATH_LENGTH], n_path[MAX_PATH_LENGTH];
-	fprintf(stderr, "rename: from %s to %s\n",path, newpath);
+	fprintf(stderr, "***********rename: from %s to %s\n",path, newpath);
 	old_n = search_node(path);
 
 	if (old_n == NULL) {
-		fprintf(stderr, "old n null");
+		fprintf(stderr, "***********old n null\n");
 		return -ENOENT;	
 	}
 	
@@ -819,19 +819,19 @@ int ypfs_rename(const char *path, const char *newpath)
 		FILE *fh, *tmp_fh;
 		uchar in[2 * AES_BLOCK_SIZE], out[2 * AES_BLOCK_SIZE];
 		
-		fprintf(stderr, "Decrypt needed");
+		fprintf(stderr, "***********Decrypt needed\n");
 		ypfs_switchpath(fpath, old_n->name);
 		
 		strcpy(fpath2, fpath);
 		strcat(fpath2, "tmp");
-		fprintf(stderr, "rename fpath: %s\n", fpath);
+		fprintf(stderr, "***********rename fpath: %s\n", fpath);
 		
-		fprintf(stderr, "rename fpath2: %s\n", fpath2);
+		fprintf(stderr, "***********rename fpath2: %s\n", fpath2);
 		
 		fh = fopen(fpath, "r");
 		tmp_fh = fopen(fpath2, "w");
 		new_n->private = 0;
-		fprintf(stderr, "decrypt now");
+		fprintf(stderr, "***********decrypt now\n");
 		while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != 0 ){
 			Decrypt(in, out);
 			fwrite(out, sizeof(char), AES_BLOCK_SIZE, tmp_fh);
@@ -839,26 +839,26 @@ int ypfs_rename(const char *path, const char *newpath)
 			memset(out, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
 		}
 		fclose(fh); fclose(tmp_fh);
-		fprintf(stderr, "Done decrypt");
+		fprintf(stderr, "***********Done decrypt\n");
 		unlink(fpath);
 		rename(fpath2, fpath);
 	} else if (old_n->private == 1) {
-		fprintf(stderr, "found private in both old and new path");
+		fprintf(stderr, "***********found private in both old and new path\n");
 	} else if (strstr(str_c(newpath,'.'),"+private") == NULL) {
-		fprintf(stderr, "private not found in private old and new path");
+		fprintf(stderr, "***********private not found in private old and new path\n");
 	}
 	
 	if (new_n != old_n)
 		remove_node(old_n);
 		
-	fprintf(stderr, "Rename: Move file from: %s to %s\n", o_path, n_path);
+	fprintf(stderr, "***********Rename: Move file from: %s to %s\n", o_path, n_path);
 	rename(o_path, n_path);
 	
 	ypfs_release(newpath, NULL);
 	
 	//ypfs_fullpath(fpath, path);
 	//ypfs_fullpath(fnewpath, newpath);
-	fprintf(stderr, "end of rename");
+	fprintf(stderr, "***********end of rename\n");
     return 0;
 }
 
@@ -867,18 +867,18 @@ int ypfs_rename(const char *path, const char *newpath)
 int ypfs_rename2(const char *path, const char *newpath)
 {
 	struct YP_NODE *old_n, *new_n;
-	fprintf(stderr, "rename2: %s to %s\n", path, newpath);
+	fprintf(stderr, "***********rename2: %s to %s\n", path, newpath);
 	old_n = search_node(path);
 	
 	if (old_n == NULL) {
-		fprintf(stderr, "old n null");
+		fprintf(stderr, "***********old n null\n");
 		return -ENOENT;	
 	}
 			
 	new_n = create_node_from_path(newpath, old_n->type);
-	fprintf(stderr, "rename2 after new node: %s %s\n", new_n->name, new_n->parent->name);
+	fprintf(stderr, "***********rename2 after new node: %s %s\n", new_n->name, new_n->parent->name);
 	if (old_n->private == 1) {
-		fprintf(stderr, "private set");
+		fprintf(stderr, "***********private set\n");
 		new_n->private = 1;
 	}
 		
@@ -887,7 +887,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 		
 	//ypfs_fullpath(fpath, path);
 	//ypfs_fullpath(fnewpath, newpath);
-	fprintf(stderr, "end of rename2");
+	fprintf(stderr, "***********end of rename2\n");
     return 0;
 }
 
@@ -897,7 +897,7 @@ int ypfs_truncate(const char *path, off_t newsize)
     int ret = 0;
 	char fpath[MAX_PATH_LENGTH];
 	struct YP_NODE *f_node = search_node_no_extension(path), *r_node = search_node(path);
-	fprintf(stderr, "truncate: %s\n", path);
+	fprintf(stderr, "***********truncate: %s\n", path);
 	
 	ypfs_switchpath(fpath, path);
 	
@@ -930,7 +930,7 @@ int ypfs_truncate(const char *path, off_t newsize)
 int ypfs_utimens(const char *path, const struct timespec tv[2])
 {
 	int ret = 0;
-	fprintf(stderr, "utimens: %s\n",path);
+	fprintf(stderr, "***********utimens: %s\n",path);
     return ret;
 }
 
@@ -950,12 +950,12 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	int fd = -1, ret = 0;
 	char fpath[MAX_PATH_LENGTH];
 	struct YP_NODE *my_node;
-	fprintf(stderr, "open: %s\n", path);
+	fprintf(stderr, "***********open: %s\n", path);
 	
 	my_node = search_node_no_extension(path);
 	
 	if (my_node == NULL) {
-		fprintf(stderr, "Null my node");
+		fprintf(stderr, "***********Null my node");
 		return -ENOENT;
 	}
 	
@@ -965,26 +965,26 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 	}
 	*/
 	ypfs_switchpath(fpath, my_node->name);
-	fprintf(stderr, "Before real open: %s\n", fpath);
+	fprintf(stderr, "***********Before real open: %s\n", fpath);
 	if (fi == NULL) {
-		fprintf(stderr, "FI is NULL");
+		fprintf(stderr, "***********FI is NULL");
 	}
 	
 	if (fi->flags == NULL) {
-		fprintf(stderr, "FI flags is NULL");
+		fprintf(stderr, "***********FI flags is NULL");
 	}
 	
 	fd = open(fpath, fi->flags, 0666);
 	
 	if (fd < 0) {
 		ret = -errno;
-		fprintf(stderr, "Fail in fd open");
+		fprintf(stderr, "***********Fail in fd open");
 		return ret;
 	}
     fi->fh = fd;
 
 	my_node->open_count++;
-	fprintf(stderr, "open done");
+	fprintf(stderr, "***********open done");
     return ret;
 }
 
@@ -1010,7 +1010,7 @@ int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
 {
 	int ret = 0;
 	struct YP_NODE *my_node;
-	fprintf(stderr, "Read path: %s\n", path);
+	fprintf(stderr, "***********Read path: %s\n", path);
 	my_node = search_node_no_extension(path);
 	
 	if (my_node == NULL)
@@ -1038,7 +1038,7 @@ int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
 int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi){
 	
 	int ret = 0;
-	fprintf(stderr, "write %s\n",path);
+	fprintf(stderr, "***********write %s\n",path);
 	
 	ret = pwrite(fi->fh, buf, size, offset);
 	
@@ -1062,7 +1062,7 @@ int ypfs_statfs(const char *path, struct statvfs *statv)
     //     
     //     log_msg("\nbb_statfs(path=\"%s\", statv=0x%08x)\n",
     // 	    path, statv);
-	fprintf(stderr, "statfs: %s\n",path);
+	fprintf(stderr, "***********statfs: %s\n",path);
     ypfs_switchpath(fpath, path);
     //     
     // get stats for underlying filesystem
@@ -1099,7 +1099,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	/*
 	int ret = 0;
 	
-	fprintf(stderr, "release");
+	fprintf(stderr, "***********release");
 	FSLog(path);
 	
 	ret = close(fi->fh);
@@ -1116,7 +1116,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	char month[1024];
 	char new_name[2048];
 	int ret = 0;
-	fprintf(stderr, "release: %s\n", path);
+	fprintf(stderr, "***********release: %s\n", path);
 
 	if (f_node == NULL) {
 		return 0;
@@ -1132,18 +1132,18 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		char *ext = str_c(path, '.');
 		char fpath2[MAX_PATH_LENGTH];
 		FILE *fh, *tmp_fh;
-		fprintf(stderr, "file completely closed; checking if renaming necessary\n");
+		fprintf(stderr, "***********file completely closed; checking if renaming necessary\n");
 			
 		ed = exif_data_new_from_file(fpath);
 		if (ed) {
-			fprintf(stderr, "EXIF data found!\n");
+			fprintf(stderr, "***********EXIF data found!\n");
 			entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
 		 	exif_entry_get_value(entry, buf, sizeof(buf));
 		 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
 		 	strftime(year, 1024, "%Y", &file_time);
 		 	strftime(month, 1024, "%B", &file_time);
 		 	sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
-			fprintf(stderr, "Release - exif found, %s\n",new_name);
+			fprintf(stderr, "***********Release - exif found, %s\n",new_name);
 		 	exif_data_unref(ed);
 		} else {
 			int num_slashes = 0;
@@ -1158,19 +1158,19 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			if (num_slashes == 1) {
 				struct stat sb;
 				struct tm * pic_time;
-				fprintf(stderr, "Release Inside num_slashes %s\n",fpath);
+				fprintf(stderr, "***********Release Inside num_slashes %s\n",fpath);
 				
 				if (stat(fpath, &sb) == -1) {
 				        perror("stat");
 				        exit(EXIT_FAILURE);
 				}
-				fprintf(stderr, "Pass fstat");
+				fprintf(stderr, "***********Pass fstat");
 				
 				pic_time = localtime(&sb.st_ctime);
 				strftime(year, 1024, "%Y", pic_time);
 				strftime(month, 1024, "%B", pic_time);
 				sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
-				fprintf(stderr, "Release - no exif, %s\n",new_name);
+				fprintf(stderr, "***********Release - no exif, %s\n",new_name);
 
 			}
 		}
@@ -1183,7 +1183,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			strcat(fpath2, "tmp");
 			tmp_fh = fopen(fpath2, "w");
 			
-			fprintf(stderr, "encrypt needed\n");
+			fprintf(stderr, "***********encrypt needed\n");
 			f_node->private = 1;
 			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != 0 ){
 				Encrypt(in, out);
@@ -1192,16 +1192,16 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				memset(out, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
 			}
 			fclose(fh); fclose(tmp_fh);
-			fprintf(stderr, "Done encrypt\n");
+			fprintf(stderr, "***********Done encrypt\n");
 			unlink(fpath);
 			rename(fpath2, fpath);
 			
 		}
-		fprintf(stderr, "before rename2 %s %s %s\n", path, fpath, new_name);
+		fprintf(stderr, "***********before rename2 %s %s %s\n", path, fpath, new_name);
 		ypfs_rename2(path, new_name);
 
 	}
-	fprintf(stderr, "End of release\n");
+	fprintf(stderr, "***********End of release\n");
 	return ret;
 	
 }
@@ -1220,7 +1220,7 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
 	struct YP_NODE *my_node = search_node(path);
 	//DIR *dp;
     char fpath[MAX_PATH_LENGTH];
-	fprintf(stderr, "opendir: %s\n",path);
+	fprintf(stderr, "***********opendir: %s\n",path);
 
     ypfs_fullpath(fpath, path);
    	
@@ -1239,7 +1239,7 @@ int ypfs_opendir(const char *path, struct fuse_file_info *fi)
 int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
 {
     int ret = 0;
-    fprintf(stderr, "releasedir");
+    fprintf(stderr, "***********releasedir");
     // log_msg("\nbb_releasedir(path=\"%s\", fi=0x%08x)\n",
     // 	    path, fi);
     //    log_fi(fi);
@@ -1273,7 +1273,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	
 	ypfs_switchpath(fpath, path);
 	
-	fprintf(stderr, "Create: path: %s and fpath: %s\n", path, fpath);
+	fprintf(stderr, "***********Create: path: %s and fpath: %s\n", path, fpath);
 	
 	while(*filename != '\0') filename++;
 	while(*filename != '/' && filename >= path) filename--;
@@ -1293,17 +1293,17 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 		return -1;
 	}
 
-	fprintf(stderr, "Create test pass\n");
+	fprintf(stderr, "***********Create test pass\n");
 	
 	// my_node = new_node(filename, YP_PIC, NULL);
 	// 	if (my_node != NULL)
 	// 		add_child(root_node, my_node);
 	create_node_from_path(path, YP_PIC);
-	fprintf(stderr, "creat: %s \n", fpath);
+	fprintf(stderr, "***********creat: %s \n", fpath);
 	fd = creat(fpath, mode);
-	// 	fprintf(stderr, "creat pass");
+	// 	fprintf(stderr, "***********creat pass");
 	if (fd < 0) {
-		fprintf(stderr, "fd fail\n");
+		fprintf(stderr, "***********fd fail\n");
 		return -errno;
 	}
 	
@@ -1339,7 +1339,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 // FUSE).
 void *ypfs_init(struct fuse_conn_info *conn)
 {
-	fprintf(stderr, "init\n");
+	fprintf(stderr, "***********init\n");
     //log_msg("\nbb_init()\n");
 	// read the tree data
 	//deserialize();
@@ -1364,7 +1364,7 @@ void ypfs_destroy(void *userdata) {
 	free(CURRENT_SESSION->mount_point);
 	free(CURRENT_SESSION);
 	
-	fprintf(stderr, "---End---\n");
+	fprintf(stderr, "***********---End---\n");
 	return ;
 }
 
@@ -1480,7 +1480,7 @@ int main(int argc, char *argv[])
 	//printf("exit curl_test");
 
 	
-	fprintf(stderr, "---Start---\n");
+	fprintf(stderr, "***********---Start---\n");
 	// check if private file exists
 	private_file_exists = find_my_config();
 		
@@ -1508,7 +1508,7 @@ int main(int argc, char *argv[])
 	ypfs_data = malloc(sizeof(struct ypfs_session));
 	
 	if (ypfs_data == NULL) {
-		fprintf(stderr, "malloc error\n");
+		fprintf(stderr, "***********malloc error\n");
 		return -1;
 	}
 	
@@ -1523,9 +1523,9 @@ int main(int argc, char *argv[])
 	root_node = new_node("/", YP_DIR);
 	//create_node_from_path("/ypfs", YP_DIR, NULL);
 	
-	fprintf(stderr, "about to call fuse_main\n");
+	fprintf(stderr, "***********about to call fuse_main\n");
     fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
-	fprintf(stderr, "fuse_main: %d\n", fuse_ret);
+	fprintf(stderr, "***********fuse_main: %d\n", fuse_ret);
 	
 	return fuse_ret;
 }
