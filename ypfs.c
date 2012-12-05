@@ -763,7 +763,7 @@ int ypfs_rename(const char *path, const char *newpath)
 	} else if (old_n->private == 1) {
 		FSLog("found private in both old and new path");
 	} else if (strstr(str_c(newpath,'.'),"+private") == NULL) {
-		FSLog("private not found in private old and new path")
+		FSLog("private not found in private old and new path");
 	}
 	
 	if (new_n != old_n)
