@@ -364,8 +364,8 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 	char *curr_char;
 	int n = 0;
 
-	// FSLog("node_resolver");
-	// FSLog(path);
+	FSLog("node_resolver");
+	FSLog(path);
 
 	if (cur == NULL)
 		FSLog("node for path: NULL cur");
@@ -420,15 +420,15 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 
 
 struct YP_NODE* search_node(const char *path) {
-	return node_resolver((char *)path, root_node, 0, 0, 0);
+	return node_resolver(path, root_node, 0, 0, 0);
 }
 
 struct YP_NODE* search_node_no_extension(const char *path) {
-	return node_resolver((char *)path, root_node, 0, 0, 1);
+	return node_resolver(path, root_node, 0, 0, 1);
 }
 
 struct YP_NODE* create_node_from_path(const char *path, YP_TYPE type) {
-	return node_resolver((char *)path, root_node, 1, type, 0);
+	return node_resolver(path, root_node, 1, type, 0);
 }
 
 void print_tree(struct YP_NODE* head, const char *pre) {
