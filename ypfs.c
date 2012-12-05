@@ -888,8 +888,8 @@ int ypfs_rename2(const char *path, const char *newpath)
 		new_n->private = 1;
 	}
 		
-	if (new_n != old_n)
-		remove_node(old_n);
+	//if (new_n != old_n)
+	//	remove_node(old_n);
 		
 	//ypfs_fullpath(fpath, path);
 	//ypfs_fullpath(fnewpath, newpath);
