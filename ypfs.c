@@ -1481,7 +1481,7 @@ void my_curl_photo_upload(char *filename, char *b64string) {
 	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, normal_callback); 
 	
 	/* Add simple name/content section */
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "action", CURLFROM_COPYCONTENTS, "upload", CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "action", CURLFORM_COPYCONTENTS, "upload", CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
