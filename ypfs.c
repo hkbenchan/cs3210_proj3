@@ -725,6 +725,65 @@ int ypfs_rename(const char *path, const char *newpath)
 		FSLog("old n null");
 		return -ENOENT;	
 	}
+	
+	// have to redo path
+	
+	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
+	
+	new_n->open_count++;
+	
+	if (old_n->private == 1 && (strstr(str_c(newpath,'.'),"+private") == NULL)) {
+		// need to decrypt image
+		char *ext = str_c(path, '.');
+		char fpath2[MAX_PATH_LENGTH];
+		FILE *fh, *tmp_fh;
+		uchar in[2 * AES_BLOCK_SIZE], out[2 * AES_BLOCK_SIZE];
+		
+		FSLog("Decrypt needed");
+		
+		fh = fopen(fpath, "r");
+		tmp_fh = fopen(fpath2, "w");
+		new_n->private = 0;
+		FSLog("decrypt now");
+		while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != 0 ){
+			Decrypt(in, out);
+			fwrite(out, sizeof(char), AES_BLOCK_SIZE, tmp_fh);
+			memset(in, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
+			memset(out, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
+		}
+		fclose(fh); fclose(tmp_fh);
+		FSLog("Done decrypt");
+		unlink(fpath);
+		rename(fpath2, fpath);
+	} else if (old_n->private == 1) {
+		FSLog("found private in both old and new path");
+	}
+	
+	if (new_n != old_n)
+		remove_node(old_n);
+	
+	ypfs_release(newpath, NULL);
+	
+	//ypfs_fullpath(fpath, path);
+	//ypfs_fullpath(fnewpath, newpath);
+	FSLog("end of rename");
+    return 0;
+}
+
+/** Rename a file - use by ypfs_release only */
+// both path and newpath are fs-relative
+int ypfs_rename2(const char *path, const char *newpath)
+{
+	struct YP_NODE *old_n, *new_n;
+	FSLog("rename");
+	FSLog(path);
+	FSLog(newpath);
+	old_n = search_node(path);
+	
+	if (old_n == NULL) {
+		FSLog("old n null");
+		return -ENOENT;	
+	}
 			
 	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
 	
@@ -969,11 +1028,12 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	char year[1024];
 	char month[1024];
 	char new_name[2048];
-	int ret;
+	int ret = 0;
 	FSLog("release");
 
 	ypfs_switchpath(fpath, f_node->name);
-	ret = close(fi->fh);
+	if (fi != NULL)
+		ret = close(fi->fh);
 	f_node->open_count--;
 
 	// redetermine where the file goes
@@ -1027,7 +1087,6 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		
 		// check if encrypt is needed
 		if (strstr(ext, "+private") && f_node->private == 0) {
-			
 			uchar in[2 * AES_BLOCK_SIZE], out[2 * AES_BLOCK_SIZE];
 			fh = fopen(fpath, "r");
 			strcpy(fpath2, fpath);
@@ -1047,24 +1106,9 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			unlink(fpath);
 			rename(fpath2, fpath);
 			
-		} /*else {
-			fh = fopen(fpath, "r");
-			tmp_fh = fopen(fpath2, "w");
-			
-			FSLog("decrypt now");
-			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != 0 ){
-				Decrypt(in, out);
-				fwrite(out, sizeof(char), AES_BLOCK_SIZE, tmp_fh);
-				memset(in, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
-				memset(out, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
-			}
-			fclose(fh); fclose(tmp_fh);
-			FSLog("Done decrypt");
-			unlink(fpath);
-			rename(fpath2, fpath);
-		}*/
+		}
 		
-		ypfs_rename(path, new_name);
+		ypfs_rename2(path, new_name);
 
 	}
 	FSLog("End of release");
