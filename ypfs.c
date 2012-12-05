@@ -516,7 +516,7 @@ void deserialize() {
 		fclose(serial_fh);
 		fprintf(stderr, "***********Finish deserializing\n");
 	} else {
-		fprintf(stderr, "***********fail deserialize");
+		fprintf(stderr, "***********fail deserialize\n");
 	}
 }
 
@@ -536,14 +536,14 @@ void _serialize(struct YP_NODE* cur, FILE *serial_fh) {
 
 void serialize() {
 	FILE* serial_fh;
-	fprintf(stderr, "***********serializing...");
+	fprintf(stderr, "***********serializing...\n");
 	serial_fh = fopen(TREE_LOCATION,"w");
 	if (serial_fh != NULL) {
 		_serialize(root_node, serial_fh);
 		fclose(serial_fh);
-		fprintf(stderr, "***********Finish serializing");
+		fprintf(stderr, "***********Finish serializing\n");
 	} else
-		fprintf(stderr, "***********Fail to serialize");
+		fprintf(stderr, "***********Fail to serialize\n");
 }
 
 
@@ -893,6 +893,10 @@ int ypfs_rename2(const char *path, const char *newpath)
 	//ypfs_fullpath(fpath, path);
 	//ypfs_fullpath(fnewpath, newpath);
 	fprintf(stderr, "***********end of rename2\n");
+	
+	// update the photos to the server
+	
+	
     return 0;
 }
 
@@ -1483,7 +1487,7 @@ int main(int argc, char *argv[])
 	}
 	
 	
-	//my_little_curl_test();
+	
 	//printf("exit curl_test");
 
 	
@@ -1511,6 +1515,9 @@ int main(int argc, char *argv[])
 			abort();
 		}
 	}
+	
+	// try register for the server
+	my_little_curl_register();
 	
 	ypfs_data = malloc(sizeof(struct ypfs_session));
 	
