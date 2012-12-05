@@ -188,6 +188,7 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
 	my_new_node->parent = NULL;
 	my_new_node->no_child = 0;
 	my_new_node->open_count = 0;
+	my_new_node->private = 0;
 	my_new_node->hash = NULL;
 	
 	if (type == YP_PIC && hash == NULL) {
@@ -726,6 +727,11 @@ int ypfs_rename(const char *path, const char *newpath)
 			
 	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
 	
+	if (old_n->private == 1 && (strstr(str_c(newpath,'.'),"+private") == NULL)) {
+		// need to decrypt image
+		FSLog("Decrypt needed");
+	}
+	
 	if (new_n != old_n)
 		remove_node(old_n);
 		
@@ -975,9 +981,53 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		char fpath2[MAX_PATH_LENGTH];
 		FILE *fh, *tmp_fh;
 		FSLog("file completely closed; checking if renaming necessary");
+			
+		ed = exif_data_new_from_file(fpath);
+		if (ed) {
+			FSLog("EXIF data found!");
+			entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
+		 	exif_entry_get_value(entry, buf, sizeof(buf));
+		 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
+		 	strftime(year, 1024, "%Y", &file_time);
+		 	strftime(month, 1024, "%B", &file_time);
+		 	sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
+			FSLog(new_name);
+			fprintf(stderr, "%s\n",new_name);
+		 	exif_data_unref(ed);
+		} else {
+			int num_slashes = 0;
+			int i;
+			//time_t rawtime;
+
+			for (i = 0; i < strlen(path); i++) {
+				if (path[i] == '/')
+				num_slashes++;
+			}
+			// in root
+			if (num_slashes == 1) {
+				FSLog("Inside num_slashes");
+				struct stat sb;
+				struct tm * pic_time;
+				
+				if (stat("/tmp/ypfs/a.txt", &sb) == -1) {
+				        perror("stat");
+				        exit(EXIT_FAILURE);
+				}
+				FSLog("Pass fstat");
+				
+				pic_time = localtime(&sb.st_ctime);
+				strftime(year, 1024, "%Y", pic_time);
+				strftime(month, 1024, "%B", pic_time);
+				sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
+				FSLog(new_name);
+
+			}
+		}
+		
+		ypfs_rename(path, new_name);
 		
 		// check if encrypt is needed
-		if (strstr(ext, "+private")) {
+		if (strstr(ext, "+private") && f_node->private == 0) {
 			
 			uchar in[2 * AES_BLOCK_SIZE], out[2 * AES_BLOCK_SIZE];
 			fh = fopen(fpath, "r");
@@ -986,6 +1036,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			tmp_fh = fopen(fpath2, "w");
 			
 			FSLog("encrypt needed");
+			f_node->private = 1;
 			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != 0 ){
 				Encrypt(in, out);
 				fwrite(out, sizeof(char), AES_BLOCK_SIZE, tmp_fh);
@@ -1014,49 +1065,6 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			rename(fpath2, fpath);
 		}*/
 		
-		ed = exif_data_new_from_file(fpath);
-		if (ed) {
-			FSLog("EXIF data found!");
-			entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
-		 	exif_entry_get_value(entry, buf, sizeof(buf));
-		 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
-		 	strftime(year, 1024, "%Y", &file_time);
-		 	strftime(month, 1024, "%B", &file_time);
-		 	sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
-			FSLog(new_name);
-			fprintf(stderr, "%s\n",new_name);
-		 	ypfs_rename(path, new_name);
-		 	exif_data_unref(ed);
-		} else {
-			int num_slashes = 0;
-			int i;
-			//time_t rawtime;
-
-			for (i = 0; i < strlen(path); i++) {
-				if (path[i] == '/')
-				num_slashes++;
-			}
-			// in root
-			if (num_slashes == 1) {
-				FSLog("Inside num_slashes");
-				struct stat sb;
-				struct tm * pic_time;
-				
-				if (stat("/tmp/ypfs/a.txt", &sb) == -1) {
-				        perror("stat");
-				        exit(EXIT_FAILURE);
-				}
-				FSLog("Pass fstat");
-				
-				pic_time = localtime(&sb.st_ctime);
-				strftime(year, 1024, "%Y", pic_time);
-				strftime(month, 1024, "%B", pic_time);
-				sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
-				FSLog(new_name);
-				ypfs_rename(path, new_name);
-
-			}
-		}
 	}
 	FSLog("End of release");
 	return ret;
