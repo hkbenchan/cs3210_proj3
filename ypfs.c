@@ -459,7 +459,11 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 	int i;
 	char tmp[MAX_PATH_LENGTH];
 	struct YP_NODE *ch;
-	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", tmp, &(cur->type), &(cur->no_child), &(cur->open_count), &(cur->private));
+	int type;
+	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", tmp, &type, &(cur->no_child), &(cur->open_count), &(cur->private));
+	
+	cur->type = (YP_TYPE)type;
+	
 	if (cur->name) {
 		free(cur->name);
 	}
