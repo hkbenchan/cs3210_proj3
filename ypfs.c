@@ -734,7 +734,7 @@ int ypfs_rename(const char *path, const char *newpath)
 	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
 	
 	new_n->open_count++;
-	
+		
 	if (old_n->private == 1 && (strstr(str_c(newpath,'.'),"+private") == NULL)) {
 		// need to decrypt image
 		char *ext = str_c(path, '.');
@@ -762,6 +762,8 @@ int ypfs_rename(const char *path, const char *newpath)
 		rename(fpath2, fpath);
 	} else if (old_n->private == 1) {
 		FSLog("found private in both old and new path");
+	} else if (strstr(str_c(newpath,'.'),"+private") == NULL) {
+		FSLog("private not found in private old and new path")
 	}
 	
 	if (new_n != old_n)
