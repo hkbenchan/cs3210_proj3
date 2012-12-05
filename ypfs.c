@@ -1402,13 +1402,12 @@ struct fuse_operations ypfs_oper = {
 };
 
 
-
-/*** my little curl testing ***/
+/*** my curl ***/
 CURL *curl_handler;
 CURLcode curl_code;
 
 // feedback from server
-static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *stream)
+static size_t normal_callback(char *ptr, size_t size, size_t nmemb, void *stream)
 {
 	size_t retcode;
 	curl_off_t nread;
@@ -1419,12 +1418,12 @@ static size_t read_callback(char *ptr, size_t size, size_t nmemb, void *stream)
 	retcode = fread(ptr, size, nmemb, stream);
     nread = (curl_off_t)retcode;
     
-  	printf("Return %s\n", ptr);
+  	fprintf(stderr, "Server Return: %s\n", ptr);
  
 	return retcode;
 }
 
-void my_little_curl_register() {
+void my_curl_register() {
 	struct curl_httppost* post = NULL;  
 	struct curl_httppost* last = NULL;  
 	long http_code = 0;
@@ -1432,13 +1431,13 @@ void my_little_curl_register() {
 	
 	curl_handler = curl_easy_init();
 	if (curl_handler == NULL) {
-		printf("cannot initialize curl handler");
+		fprintf(stderr, "cannot initialize curl handler");
 		abort();
 	}
-	printf("curl_easy_init\n");
+	fprintf(stderr, "curl_easy_init\n");
 	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/register.php");
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
-	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, read_callback); 
+	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, normal_callback); 
 	
 	/* Add simple name/content section */
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
@@ -1453,15 +1452,58 @@ void my_little_curl_register() {
 	
 	curl_easy_getinfo (curl_handler, CURLINFO_RESPONSE_CODE, &http_code);
 	if (curl_code != CURLE_ABORTED_BY_CALLBACK) {
-		printf("curl http code: %ld\n", http_code);
+		fprintf(stderr, "curl http code: %ld\n", http_code);
 	} else {
-		printf("curl abort by callback\n");
+		fprintf(stderr, "curl abort by callback\n");
 	}
 
 	//printf("curl return code : %s\n", curl_easy_strerror(curl_code));
 	curl_formfree(post);
 	curl_easy_cleanup(curl_handler);
-	printf("curl_easy_cleanup\n");
+	fprintf(stderr, "curl_easy_cleanup\n");
+}
+
+
+void my_curl_photo_upload(char *filename, char *b64string) {
+	struct curl_httppost* post = NULL;  
+	struct curl_httppost* last = NULL;  
+	long http_code = 0;
+	//struct curl_slist *headerlist=NULL;
+	
+	curl_handler = curl_easy_init();
+	if (curl_handler == NULL) {
+		fprintf(stderr, "cannot initialize curl handler");
+		abort();
+	}
+	fprintf(stderr, "curl_easy_init\n");
+	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/photo.php");
+	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
+	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, normal_callback); 
+	
+	/* Add simple name/content section */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "action", CURLFROM_COPYCONTENTS, "upload", CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "b64string", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
+	//headerlist = curl_slist_append(headerlist, buf);
+
+	/* Set the form info */
+	curl_easy_setopt(curl_handler, CURLOPT_HTTPPOST, post);
+	
+	curl_code = curl_easy_perform(curl_handler);
+	
+	curl_easy_getinfo (curl_handler, CURLINFO_RESPONSE_CODE, &http_code);
+	if (curl_code != CURLE_ABORTED_BY_CALLBACK) {
+		fprintf(stderr, "curl http code: %ld\n", http_code);
+	} else {
+		fprintf(stderr, "curl abort by callback\n");
+	}
+
+	//printf("curl return code : %s\n", curl_easy_strerror(curl_code));
+	curl_formfree(post);
+	curl_easy_cleanup(curl_handler);
+	fprintf(stderr, "curl_easy_cleanup\n");
 }
 
 
@@ -1517,8 +1559,11 @@ int main(int argc, char *argv[])
 	}
 	
 	// try register for the server
-	my_little_curl_register();
+	my_curl_register();
 	
+	// test upload photo
+	my_curl_photo_upload("test.jpg","hello world");
+	return 0;
 	ypfs_data = malloc(sizeof(struct ypfs_session));
 	
 	if (ypfs_data == NULL) {
