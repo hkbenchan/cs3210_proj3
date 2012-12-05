@@ -384,10 +384,10 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 
 	if (*path == '\0') {
 		last_node = 1;
-		//FSLog("Last node");
+		FSLog("Last node");
 	}
 	if (i == 0) {
-		//FSLog("return cur");
+		FSLog("return cur");
 		return cur;
 	}
 
@@ -457,7 +457,8 @@ void print_full_tree() {
 
 void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 	int i;
-	char tmp[MAX_PATH_LENGTH];
+	char tmp[MAX_PATH_LENGTH], path[MAX_PATH_LENGTH];
+	FILE* test_handle;
 	struct YP_NODE *ch;
 	int type;
 	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", tmp, &type, &(cur->no_child), &(cur->open_count), &(cur->private));
@@ -467,6 +468,16 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 	if (cur->name) {
 		free(cur->name);
 	}
+	
+	ypfs_switchpath(path, tmp);
+	test_handle = fopen(path, "r");
+	
+	if (test_handle == NULL) {
+		// need to request for this image
+	} else {
+		fclose(test_handle);
+	}
+	
 	
 	cur->name = malloc(sizeof(char) * (strlen(tmp)+1));
 	strcpy(cur->name, tmp);
@@ -1355,7 +1366,7 @@ void *ypfs_init(struct fuse_conn_info *conn)
 	FSLog("init");
     //log_msg("\nbb_init()\n");
 	// read the tree data
-	deserialize();
+	//deserialize();
 	return (struct ypfs_session *)fuse_get_context()->private_data;
 }
 
