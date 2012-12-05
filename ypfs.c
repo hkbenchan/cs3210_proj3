@@ -52,12 +52,11 @@ in base64
 #define CURRENT_SESSION ((struct ypfs_session *) fuse_get_context()->private_data)
 // allow extension: .gif, .jpg, .png
 typedef unsigned char uchar;
-static const uchar ckey[] = "ypfs_filesystem";
 
 struct ypfs_session {
 	char username[30];
-    char *private_key_location;
-	char *public_key_location;
+	char password[25];
+	uchar cipertext[100];
 	char *mount_point;
 };
 
@@ -78,7 +77,8 @@ static struct YP_NODE *root_node;
 
 const char *ypfs_str = "Welecome to your pic filesystem!\n";
 const char *ypfs_path = "/ypfs";
-char username[30];
+char username[30], password[25];
+uchar cipertext[100];
 
 void remove_self_and_children_file(struct YP_NODE *);
 
@@ -125,7 +125,7 @@ int find_my_config()
 	
 	if (fh != NULL) {
 		
-		ret = fscanf(fh,"%s", username);
+		ret = fscanf(fh,"%s\n%s\n%s", username, password, (char *) cipertext);
 		fclose(fh);
 		
 		if ( strcmp(username, "") != 0) {
@@ -144,7 +144,7 @@ int make_my_config()
 	fh = fopen(SERCET_LOCATION, "w");
 	
 	if (fh != NULL) {
-		fprintf(fh , "%s", username);
+		fprintf(fh , "%s\n%s\n%s", username, password, (char *) cipertext);
 		fclose(fh);
 		
 		/****** Send key request to server and store **********/
@@ -160,31 +160,19 @@ int make_my_config()
 
 void Encrypt(uchar *in, uchar *out)
 {
-    static int firstRun = 1;
-    static AES_KEY encryptKey;
+    AES_KEY encryptKey;
 
-    if (firstRun == 1)
-    {
-        AES_set_encrypt_key(ckey, 256, &encryptKey);
-        firstRun = 0;
-    }
-	
-	printf("ENCRY KEY: %s\n", encryptKey);
-	
+    AES_set_encrypt_key(cipertext, 256, &encryptKey);
+
     AES_ecb_encrypt(in, out, &encryptKey, AES_ENCRYPT);
 
 }
 
 void Decrypt(uchar *in, uchar *out)
 {
-    static int firstRun = 1;
-    static AES_KEY decryptKey;
-
-    if (firstRun == 1)
-    {
-        AES_set_decrypt_key(ckey, 256, &decryptKey);
-        firstRun = 0;
-    }
+    AES_KEY decryptKey;
+    
+	AES_set_decrypt_key(cipertext, 256, &decryptKey);
 
     AES_ecb_encrypt(in, out, &decryptKey, AES_DECRYPT);
 
@@ -434,6 +422,21 @@ void print_full_tree() {
 	}
 	FSLog("End of Print");
 }
+
+void _serialize() {
+	
+}
+
+
+void serialize() {
+	
+}
+
+
+
+
+
+
 
 ///////////////////////////////////////////////////////////
 //
@@ -937,7 +940,49 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 
 	// redetermine where the file goes
 	if (f_node->open_count <= 0) {
+		char *ext = str_c(path, '.');
+		char fpath2[MAX_PATH_LENGTH];
+		FILE *fh, *tmp_fh;
 		FSLog("file completely closed; checking if renaming necessary");
+		
+		// check if encrypt is needed
+		if (strstr(ext, "+private")) {
+			/*
+			uchar in[2 * AES_BLOCK_SIZE], out[2 * AES_BLOCK_SIZE];
+			fh = fopen(fpath, "r");
+			strcpy(fpath2, fpath);
+			strcat(fpath2, "tmp");
+			tmp_fh = fopen(fpath2, "w");
+			*/
+			FSLog("encrypt needed");/*
+			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != NULL ){
+				Encrypt(in, out);
+				fwrite(out, sizeof(char), AES_BLOCK_SIZE, tmp_fh);
+				memset(in, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
+				memset(out, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
+			}
+			fclose(fh); fclose(tmp_fh);
+			FSLog("Done encrypt");
+			unlink(fpath);
+			rename(fpath2, fpath);
+			
+			fh = fopen(fpath, "r");
+			tmp_fh = fopen(fpath2, "w");
+			
+			FSLog("decrypt now");
+			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != NULL ){
+				Decrypt(in, out);
+				fwrite(out, sizeof(char), AES_BLOCK_SIZE, tmp_fh);
+				memset(in, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
+				memset(out, 0, sizeof(unsigned char) * AES_BLOCK_SIZE);
+			}
+			fclose(fh); fclose(tmp_fh);
+			FSLog("Done decrypt");
+			unlink(fpath);
+			rename(fpath2, fpath);
+			*/
+		}
+		
 		ed = exif_data_new_from_file(fpath);
 		if (ed) {
 			FSLog("EXIF data found!");
@@ -1148,6 +1193,7 @@ void *ypfs_init(struct fuse_conn_info *conn)
 {
 	FSLog("init");
     //log_msg("\nbb_init()\n");
+	// read the tree data
     
 	return (struct ypfs_session *)fuse_get_context()->private_data;
 }
@@ -1163,13 +1209,11 @@ void ypfs_destroy(void *userdata) {
 	
 	//printf("Bye bye %s\n", username);
 	
-	// remove files copied inside /tmp/ypfs
-	remove_copied_files();
+	// constrcut the tree data
+	
 	
 	// deallocate the object and free
 	free(CURRENT_SESSION->mount_point);
-	// free(CURRENT_SESSION->public_key_location);
-	// free(CURRENT_SESSION->private_key_location);
 	free(CURRENT_SESSION);
 	
 	FSLog("---End---");
@@ -1238,8 +1282,8 @@ void my_little_curl_test() {
 	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, read_callback); 
 	
 	/* Add simple name/content section */
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, "testing people", CURLFORM_END);
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, "this_is_a_password", CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
 
 	//headerlist = curl_slist_append(headerlist, buf);
 
@@ -1275,15 +1319,6 @@ int main(int argc, char *argv[])
 	int fuse_ret = 0;
 	int i;
 	
-	uchar in[2 * AES_BLOCK_SIZE] = "helloworld1234\nhelloworld1234\n";
-	uchar out[2 * AES_BLOCK_SIZE];
-	
-	Encrypt(in, out);
-	printf("encry: %s\n", out);
-	Decrypt(out, in);
-	printf("decry: %s\n", in);
-	//return 0;
-	
 	if (DEBUG == 0)
 		FSLogFlush();
 	
@@ -1293,15 +1328,34 @@ int main(int argc, char *argv[])
 	}
 	
 	
-	
-	
-	my_little_curl_test();
-	printf("exit curl_test");
-	return 0;
+	//my_little_curl_test();
+	//printf("exit curl_test");
+
 	
 	FSLog("---Start---");
 	// check if private file exists
 	private_file_exists = find_my_config();
+		
+		
+	if (!private_file_exists) {
+		printf("This is your first time to use this system, please register...\nUsername: ");
+		scanf("%s", username);
+		printf("Password: ");
+		scanf("%s", password);
+		printf("Encrypt description: ");
+		scanf("%s", (char *)cipertext);
+		if (make_my_config() == 0) {
+			return -1;
+		}
+	} else {
+		char pwd[25];
+		printf("Type password: ");
+		scanf("%s", pwd);
+		if (strcmp(pwd, password) != 0) {
+			printf("Password not match, abort!");
+			abort();
+		}
+	}
 	
 	ypfs_data = malloc(sizeof(struct ypfs_session));
 	
@@ -1311,16 +1365,6 @@ int main(int argc, char *argv[])
 	}
 	
 	umask(0);
-	
-	if (!private_file_exists) {
-		printf("This is your first time to use this system, please register...\nUsername: ");
-		scanf("%s", username);
-		if (make_my_config() == 0) {
-			return -1;
-		}
-		
-		//ypfs_data->mount_point = realpath(argv[], NULL);
-	}
 	
 	ypfs_data->mount_point = realpath(argv[1], NULL);
 	//printf("Your mount point: %s\n", ypfs_data->mount_point);
