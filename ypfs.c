@@ -81,6 +81,7 @@ char username[30], password[25];
 uchar cipertext[100];
 
 void remove_self_and_children_file(struct YP_NODE *);
+int ypfs_release(const char *, struct fuse_file_info *);
 
 static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
 {
