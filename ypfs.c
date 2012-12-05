@@ -1515,19 +1515,41 @@ void my_curl_photo_upload(char *filename, char *b64string) {
 
 
 void test_bio() {
-	BIO *bio, *b64;
- 	char message[] = "Hello World \n";
-	char *answer = malloc(sizeof(char) * 10000);
-	b64 = BIO_new(BIO_f_base64());
- 	bio = BIO_new_fp(answer, BIO_NOCLOSE);
- 	bio = BIO_push(b64, bio);
- 	BIO_write(bio, message, strlen(message));
- 	BIO_flush(bio);
+	BIO *bio, *b64, *bio_out;
+	FILE* fh = fopen("a.log", "r");
+ 	//char message[] = "SGVsbG8gV29ybGQgCg==\n";
+	/*char *answer = malloc(sizeof(char) * 10000);
+	
+	if (fh != NULL) {
+		b64 = BIO_new(BIO_f_base64());
+	 	bio = BIO_new_fp(fh, BIO_NOCLOSE);
+	 	bio = BIO_push(b64, bio);
+	 	BIO_write(bio, message, strlen(message));
+	 	BIO_flush(bio);
 
- 	BIO_free_all(bio);
+	 	BIO_free_all(bio);
+		
+		fprint(stderr, "test bio: %s\n", answer);
+	}
+	*/
+ 	char inbuf[512];
+ 	int inlen;
+	if (fh != null) {
+		b64 = BIO_new(BIO_f_base64());
+	 	bio = BIO_new_fp(fh, BIO_NOCLOSE);
+	 	bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
+	 	bio = BIO_push(b64, bio);
+	 	while((inlen = BIO_read(bio, inbuf, 512)) > 0)
+	        BIO_write(bio_out, inbuf, inlen);
 
-	fprint(stderr, "test bio: %s\n", answer);	
-	free(answer);
+	 	BIO_free_all(bio);
+	}
+ 	
+	if (fh != NULL) {
+		fclose(fh);
+	}
+	//free(answer);
+	
 }
 
 int main(int argc, char *argv[])
