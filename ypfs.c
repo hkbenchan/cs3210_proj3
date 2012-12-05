@@ -194,6 +194,9 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type) {
 	my_new_node->no_child = 0;
 	my_new_node->open_count = 0;
 	my_new_node->private = 0;
+	
+	fprintf(stderr, "New node created with name: %s\n", my_new_node->name);
+	
 	/*
 	my_new_node->hash = NULL;
 	
