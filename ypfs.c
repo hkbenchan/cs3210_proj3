@@ -978,14 +978,14 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		
 		// check if encrypt is needed
 		if (strstr(ext, "+private")) {
-			/*
+			
 			uchar in[2 * AES_BLOCK_SIZE], out[2 * AES_BLOCK_SIZE];
 			fh = fopen(fpath, "r");
 			strcpy(fpath2, fpath);
 			strcat(fpath2, "tmp");
 			tmp_fh = fopen(fpath2, "w");
-			*/
-			FSLog("encrypt needed");/*
+			
+			FSLog("encrypt needed");
 			while ( fread(in, sizeof(char), AES_BLOCK_SIZE, fh) != NULL ){
 				Encrypt(in, out);
 				fwrite(out, sizeof(char), AES_BLOCK_SIZE, tmp_fh);
@@ -1011,7 +1011,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			FSLog("Done decrypt");
 			unlink(fpath);
 			rename(fpath2, fpath);
-			*/
+			
 		}
 		
 		ed = exif_data_new_from_file(fpath);
