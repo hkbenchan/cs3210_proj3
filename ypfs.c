@@ -187,7 +187,7 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type) {
 	
 	my_new_node->name = malloc(sizeof(char) * (strlen(path) + 1));
 	strcpy(my_new_node->name, path);
-	my_new_node[strlen(path)] = '\0';
+	my_new_node->name[strlen(path)] = '\0';
 	my_new_node->type = type;
 	my_new_node->children = NULL;
 	my_new_node->parent = NULL;
