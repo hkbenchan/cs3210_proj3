@@ -243,7 +243,7 @@ struct YP_NODE* add_child(struct YP_NODE *parent, struct YP_NODE *child) {
 void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 	struct YP_NODE** tmp_child_list;
 	int tmp_no_child;
-	int i, active;
+	int i, active = 0;
 	
 	if (parent == NULL) {
 		FSLog("Remove child to a null parent");
@@ -263,7 +263,7 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 
 			for (i=0; i<tmp_no_child; i++) {
 				if (tmp_child_list[i] != child) {
-					(parent->children)[active] = tmp_child_list[i];
+					parent->children[active] = tmp_child_list[i];
 					active++;
 				}
 			}
@@ -271,7 +271,7 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 
 		parent->no_child = tmp_no_child-1;
 
-		free(tmp_child_list);
+		// free(tmp_child_list);
 
 		/*if (child->name)
 			free(child->name);
