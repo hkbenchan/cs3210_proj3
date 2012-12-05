@@ -799,9 +799,11 @@ int ypfs_rename2(const char *path, const char *newpath)
 			
 	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
 	
-	if (old_n->private == 1)
+	if (old_n->private == 1) {
+		FSLog("private set");
 		new_n->private == 1;
-	
+	}
+		
 	if (new_n != old_n)
 		remove_node(old_n);
 		
