@@ -787,7 +787,7 @@ int ypfs_rename(const char *path, const char *newpath)
 int ypfs_rename2(const char *path, const char *newpath)
 {
 	struct YP_NODE *old_n, *new_n;
-	FSLog("rename");
+	FSLog("rename2");
 	FSLog(path);
 	FSLog(newpath);
 	old_n = search_node(path);
@@ -801,7 +801,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 	
 	if (old_n->private == 1) {
 		FSLog("private set");
-		new_n->private == 1;
+		new_n->private = 1;
 	}
 		
 	if (new_n != old_n)
@@ -809,7 +809,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 		
 	//ypfs_fullpath(fpath, path);
 	//ypfs_fullpath(fnewpath, newpath);
-	FSLog("end of rename");
+	FSLog("end of rename2");
     return 0;
 }
 
