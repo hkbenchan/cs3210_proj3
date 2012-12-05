@@ -1534,7 +1534,7 @@ void test_bio() {
 	*/
  	char inbuf[512];
  	int inlen;
-	if (fh != null) {
+	if (fh != NULL) {
 		b64 = BIO_new(BIO_f_base64());
 	 	bio = BIO_new_fp(fh, BIO_NOCLOSE);
 	 	bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
