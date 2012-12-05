@@ -1536,7 +1536,7 @@ void bio_encode(FILE* fh_in, FILE* fh_out) {
 	if (fh_in != NULL && fh_out != NULL) {
 		b64 = BIO_new(BIO_f_base64());
 	 	bio = BIO_new_fp(fh_in, BIO_NOCLOSE);
-	 	bio_out = BIO_new_fp(fh_out, BIO_NOCLOSE);
+	 	bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
 	 	bio = BIO_push(b64, bio);
 	 	while((inlen = BIO_read(bio, inbuf, 512)) > 0)
 	        BIO_write(bio_out, inbuf, inlen);
@@ -1570,10 +1570,10 @@ int main(int argc, char *argv[])
 	}
 	
 	//test_bio();
-	//bio_encode(fh, fh_o);
+	bio_encode(fh, fh_o);
 	//printf("exit curl_test");
 
-	
+	return 0;
 	fprintf(stderr, "***********---Start---\n");
 	// check if private file exists
 	private_file_exists = find_my_config();
