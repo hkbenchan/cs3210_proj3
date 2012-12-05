@@ -414,7 +414,7 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 		}
 		compare_name[n] = '\0';
 		if (strcmp(name, compare_name) == 0) {
-			fprintf(stderr, "In %s, node %s found, go inside found child\n", cur->name, (cur->children[i])->name);
+			fprintf(stderr, "In %s, node %s found, go inside found child %s\n", cur->name, (cur->children[i])->name, name);
 			return node_resolver(path, cur->children[i], create, type, skip_ext); // search it inside this child
 		}
 			
