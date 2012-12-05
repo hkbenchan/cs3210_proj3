@@ -376,8 +376,10 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 	FSLog("node_resolver");
 	FSLog(path);
 
-	if (cur == NULL)
+	if (cur == NULL) {
 		FSLog("node for path: NULL cur");
+	}
+		
 
 	ext = str_c(path, '.');
 
@@ -393,10 +395,10 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 
 	if (*path == '\0') {
 		last_node = 1;
-		FSLog("Last node");
+//		FSLog("Last node");
 	}
 	if (i == 0) {
-		FSLog("return cur");
+//		FSLog("return cur");
 		return cur;
 	}
 
