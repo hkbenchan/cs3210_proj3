@@ -500,7 +500,7 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		// for stat later in function
 		
 		strcat(fpath, strchr(path, '.'));
-	} else {
+	} else if (my_node_no_ext->type == YP_PIC){
 		strcat(fpath, strchr(my_node_no_ext->name,'.'));
 	}
 	
