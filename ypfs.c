@@ -373,8 +373,8 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 	char *curr_char;
 	int n = 0;
 
-	FSLog("node_resolver");
-	FSLog(path);
+	// FSLog("node_resolver");
+	// FSLog(path);
 
 	if (cur == NULL) {
 		FSLog("node for path: NULL cur");
