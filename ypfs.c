@@ -718,6 +718,7 @@ int ypfs_rename(const char *path, const char *newpath)
 	struct YP_NODE *old_n, *new_n;
 	FSLog("rename");
 	FSLog(path);
+	FSLog(newpath);
 	old_n = search_node(path);
 	
 	if (old_n == NULL) {
