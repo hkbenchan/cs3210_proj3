@@ -323,6 +323,32 @@ char* str_c(const char* path, char after)
 		return NULL;
 }
 
+char* cut_extension(const char* filename)
+{
+	if (filename != NULL) {
+		int i, cnt = 0;
+		for (i=0; i<strlen(filename); i++){
+			if (filename[i] == '.') {
+				break;
+			}
+			cnt++;
+		}
+		if (cnt == 0) {
+			return '\0';
+		} else {
+			int j = 0;
+			char *no_ext = malloc((cnt+1) * sizeof(char));
+			for (j = 0; j<cnt; j++) {
+				no_ext[j] = filename[j];
+			}
+			no_ext[cnt] = '\0';
+			return no_ext;
+		}
+		
+	} else {
+		return NULL;
+	}
+}
 
 
 struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create, YP_TYPE type, char *hash, int skip_ext)
@@ -467,12 +493,12 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		return -ENOENT;
 	}
 
-	ypfs_switchpath(fpath, my_node_no_ext->name);
+	ypfs_switchpath(fpath, cut_extension(my_node_no_ext->name));
 	
 	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
-		// convert here, so file 1324242 becomes 1324242.png
-		// convert_img(my_node_no_ext, path);
+		
 		// for stat later in function
+		
 		strcat(fpath, strchr(path, '.'));
 	}
 	memset(stbuf, 0, sizeof(struct stat));
