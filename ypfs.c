@@ -746,6 +746,9 @@ int ypfs_rename(const char *path, const char *newpath)
 		FSLog("Decrypt needed");
 		ypfs_switchpath(fpath, newpath);
 		
+		strcpy(fpath2, fpath);
+		strcat(fpath2, "tmp");
+		
 		fh = fopen(fpath, "r");
 		tmp_fh = fopen(fpath2, "w");
 		new_n->private = 0;
