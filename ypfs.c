@@ -46,7 +46,10 @@ in base64
 #include <openssl/aes.h>
 
 #define DEBUG 0
-#define SERCET_LOCATION "/tmp/ypfs/.config"
+#define SERCET_LOCATION "/tmp/.config_ypfs"
+#define LOGFILE_LOCATION "/tmp/ypfs.log"
+#define TREE_LOCATION "/tmp/.ypfs/tree"
+
 #define MAX_PATH_LENGTH 500
 
 #define CURRENT_SESSION ((struct ypfs_session *) fuse_get_context()->private_data)
@@ -64,7 +67,7 @@ typedef enum {YP_DIR, YP_PIC} YP_TYPE;
 
 struct YP_NODE {
 	char *name;
-	char *hash; // unique name
+	//char *hash; // unique name
 	YP_TYPE type;
 	struct YP_NODE ** children;
 	struct YP_NODE* parent;
@@ -100,7 +103,7 @@ static void ypfs_switchpath(char fpath[MAX_PATH_LENGTH], const char *path)
 void FSLogFlush()
 {
 	FILE *fh;
-	fh = fopen("/tmp/ypfs/log","w");
+	fh = fopen(LOGFILE_LOCATION,"w");
 	fclose(fh);
 }
 
@@ -110,7 +113,7 @@ void FSLog(const char *message)
 	struct timeval t;
 	gettimeofday(&t, NULL);
 	
-	fh = fopen("/tmp/ypfs/log","a");
+	fh = fopen(LOGFILE_LOCATION,"a");
 	if (fh != NULL) {
 		fprintf(fh, "%ld.%ld : %s\n", t.tv_sec, t.tv_usec, message);
 		fclose(fh);
@@ -179,7 +182,7 @@ void Decrypt(uchar *in, uchar *out)
 
 }
 
-struct YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
+struct YP_NODE* new_node(const char *path, YP_TYPE type) {
 	struct YP_NODE *my_new_node = malloc(sizeof(struct YP_NODE));
 	
 	my_new_node->name = malloc(sizeof(char) * (strlen(path) + 1));
@@ -190,6 +193,7 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
 	my_new_node->no_child = 0;
 	my_new_node->open_count = 0;
 	my_new_node->private = 0;
+	/*
 	my_new_node->hash = NULL;
 	
 	if (type == YP_PIC && hash == NULL) {
@@ -199,7 +203,7 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type, const char *hash) {
 		my_new_node->hash = malloc(sizeof(char) * 50);
 		sprintf(my_new_node->hash, "%s", hash);
 	}
-
+	*/
 	return my_new_node;
 }
 
@@ -263,9 +267,6 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 
 		if (child->name)
 			free(child->name);
-
-		if (child->hash)
-			free(child->hash);
 
 		if (child)
 			free(child);
@@ -353,7 +354,7 @@ char* cut_extension(const char* filename)
 }
 
 
-struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create, YP_TYPE type, char *hash, int skip_ext)
+struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create, YP_TYPE type, int skip_ext)
 {
 	char name[MAX_PATH_LENGTH];
 	int i = 0;
@@ -402,14 +403,14 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 		}
 		compare_name[n] = '\0';
 		if (strcmp(name, compare_name) == 0)
-			return node_resolver(path, cur->children[i], create, type, hash, skip_ext); // search it inside this child
+			return node_resolver(path, cur->children[i], create, type, skip_ext); // search it inside this child
 		*compare_name = '\0';
 	}
 
 
 	if (create == 1) {
 		// add a child to cur and continue the process
-		return node_resolver(path, add_child(cur, new_node(name, last_node == 1 ? type : YP_DIR, hash)), create, type, hash, skip_ext);
+		return node_resolver(path, add_child(cur, new_node(name, last_node == 1 ? type : YP_DIR)), create, type, hash, skip_ext);
 	}
 
 	return NULL;
@@ -417,15 +418,15 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 
 
 struct YP_NODE* search_node(const char *path) {
-	return node_resolver((char *)path, root_node, 0, 0, NULL, 0);
+	return node_resolver((char *)path, root_node, 0, 0, 0);
 }
 
 struct YP_NODE* search_node_no_extension(const char *path) {
-	return node_resolver((char *)path, root_node, 0, 0, NULL, 1);
+	return node_resolver((char *)path, root_node, 0, 0, 1);
 }
 
-struct YP_NODE* create_node_from_path(const char *path, YP_TYPE type, char *hash) {
-	return node_resolver((char *)path, root_node, 1, type, hash, 0);
+struct YP_NODE* create_node_from_path(const char *path, YP_TYPE type) {
+	return node_resolver((char *)path, root_node, 1, type, 0);
 }
 
 void print_tree(struct YP_NODE* head, const char *pre) {
@@ -451,13 +452,65 @@ void print_full_tree() {
 	FSLog("End of Print");
 }
 
-void _serialize() {
+
+void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
+	int i;
+	char tmp[MAX_PATH_LENGTH];
+	struct YP_NODE *ch;
+	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\t\n", tmp, (YP_TYPE)cur->type, cur->no_child, cur->open_count, cur->private);
+	if (cur->name) {
+		free(cur->name);
+	}
 	
+	cur->name = malloc(sizeof(char) * (strlen(tmp)+1));
+	strcpy(cur->name, tmp);
+	cur->children = malloc(sizeof(struct YP_NODE *) * (cur->no_child));
+	for (i = 0; i< cur->no_child; i++) {
+		ch = new_node("/t", cur->type);
+		_deserialize(ch, serial_fh);
+		cur->children[i] = ch;
+		ch->parent = cur;
+	}
+	
+}
+
+void deserialize() {
+	FILE* serial_fh;
+	FSLog("deserializing...");
+	serial_fh = fopen(TREE_LOCATION, "r");
+	if (serial_fh != NULL) {
+		_deserialize(root_node, serial_fh);
+		fclose(serial_fh);
+		FSLog("Finish deserializing");
+	} else {
+		FSLog("fail deserialize");
+	}
+}
+
+
+
+void _serialize(struct YP_NODE* cur, FILE *serial_fh) {
+	int i;
+	
+	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\t\n", name, (int)type, no_child, open_count, private);
+	
+	for (i=0; i< cur->no_child; i++) {
+		_serialize(cur->children[i]);
+	}
 }
 
 
 void serialize() {
-	
+	FILE* serial_fh;
+	FSLog("serializing...");
+	serial_fh = fopen(TREE_LOCATION,"w");
+	//fclose(serial_fh);
+	if (serial_fh != NULL) {
+		_serialize(root_node, serial_fh);
+		fclose(serial_fh);
+		FSLog("Finish serializing");
+	} else
+		FSLog("Fail to serialize");
 }
 
 
@@ -1313,7 +1366,7 @@ void ypfs_destroy(void *userdata) {
 	//printf("Bye bye %s\n", username);
 	
 	// constrcut the tree data
-	
+	serialize();
 	
 	// deallocate the object and free
 	free(CURRENT_SESSION->mount_point);
