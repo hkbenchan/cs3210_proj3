@@ -44,6 +44,8 @@ in base64
 #include <curl/curl.h>
 
 #include <openssl/aes.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
 
 #define DEBUG 0
 #define SERCET_LOCATION "/tmp/.config_ypfs"
