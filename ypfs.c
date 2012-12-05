@@ -480,13 +480,18 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 		free(cur->name);
 	}
 	
-	ypfs_switchpath(path, tmp);
-	test_handle = fopen(path, "r");
-	
-	if (test_handle == NULL) {
-		// need to request for this image
-	} else {
-		fclose(test_handle);
+	if (cur->type == YP_PIC) {
+		ypfs_switchpath(path, tmp);
+		test_handle = fopen(path, "r");
+
+		if (test_handle == NULL) {
+			// need to request for this image
+			fprintf(stderr, "************ Image %s does not found, requesting\n", tmp)
+		} else {
+			fprintf(stderr, "************ Image %s found, good\n", tmp);
+			fclose(test_handle);
+		}
+		
 	}
 	
 	
@@ -1344,7 +1349,7 @@ void *ypfs_init(struct fuse_conn_info *conn)
 	fprintf(stderr, "***********init\n");
     //log_msg("\nbb_init()\n");
 	// read the tree data
-	//deserialize();
+	deserialize();
 	return (struct ypfs_session *)fuse_get_context()->private_data;
 }
 
