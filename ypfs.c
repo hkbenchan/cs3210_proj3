@@ -271,15 +271,14 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 
 		parent->no_child = tmp_no_child-1;
 
-		// free(tmp_child_list);
+		free(tmp_child_list);
 
-		/*if (child->name)
+		if (child->name)
 			free(child->name);
 		
 		
 		if (child)
 			free(child);
-		*/
 	}
 		
 }
@@ -1023,7 +1022,8 @@ int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
 	int ret = 0;
 	struct YP_NODE *my_node;
 	FSLog("read");
-	
+	FSLog(path);
+	fprintf(stderr, "Read path: %s\n", path);
 	my_node = search_node_no_extension(path);
 	
 	if (my_node == NULL)
