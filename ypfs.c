@@ -267,15 +267,14 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 					active++;
 				}
 			}
-		}	
+		}
 
 		parent->no_child = tmp_no_child-1;
 
 		free(tmp_child_list);
 
 		if (child->name)
-			free(child->name);
-		
+			free(child->name);		
 		
 		if (child)
 			free(child);
@@ -1138,6 +1137,11 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	char new_name[2048];
 	int ret = 0;
 	FSLog("release");
+
+	if (f_node == NULL) {
+		return 0;
+	}
+
 
 	ypfs_switchpath(fpath, f_node->name);
 	if (fi != NULL)
