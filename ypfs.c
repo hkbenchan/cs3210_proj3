@@ -736,10 +736,12 @@ int ypfs_rename(const char *path, const char *newpath)
 		// need to decrypt image
 		char *ext = str_c(path, '.');
 		char fpath2[MAX_PATH_LENGTH];
+		char fpath[MAX_PATH_LENGTH];
 		FILE *fh, *tmp_fh;
 		uchar in[2 * AES_BLOCK_SIZE], out[2 * AES_BLOCK_SIZE];
 		
 		FSLog("Decrypt needed");
+		ypfs_switchpath(fpath, newpath);
 		
 		fh = fopen(fpath, "r");
 		tmp_fh = fopen(fpath2, "w");
