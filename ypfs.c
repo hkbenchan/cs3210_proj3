@@ -1173,7 +1173,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				fprintf(stderr, "***********Release - no exif, %s\n",new_name);
 
 			} else {
-				sprintf(newname, "%s", path);
+				sprintf(new_name, "%s", path);
 			}
 		}
 		
