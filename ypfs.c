@@ -410,7 +410,7 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 
 	if (create == 1) {
 		// add a child to cur and continue the process
-		return node_resolver(path, add_child(cur, new_node(name, last_node == 1 ? type : YP_DIR)), create, type, hash, skip_ext);
+		return node_resolver(path, add_child(cur, new_node(name, last_node == 1 ? type : YP_DIR)), create, type, skip_ext);
 	}
 
 	return NULL;
@@ -457,7 +457,7 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 	int i;
 	char tmp[MAX_PATH_LENGTH];
 	struct YP_NODE *ch;
-	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\t\n", tmp, (YP_TYPE)cur->type, cur->no_child, cur->open_count, cur->private);
+	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", tmp, &(cur->type), &(cur->no_child), &(cur->open_count), &(cur->private));
 	if (cur->name) {
 		free(cur->name);
 	}
@@ -492,10 +492,10 @@ void deserialize() {
 void _serialize(struct YP_NODE* cur, FILE *serial_fh) {
 	int i;
 	
-	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\t\n", name, (int)type, no_child, open_count, private);
+	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", cur->name, (int)cur->type, cur->no_child, cur->open_count, cur->private);
 	
 	for (i=0; i< cur->no_child; i++) {
-		_serialize(cur->children[i]);
+		_serialize(cur->children[i], serial_fh);
 	}
 }
 
@@ -646,7 +646,7 @@ int ypfs_mkdir(const char* path, mode_t mode){
 	FSLog(path);
 	//ypfs_fullpath(fpath, path);
 	
-	if (create_node_from_path(path, YP_DIR, NULL) == NULL)
+	if (create_node_from_path(path, YP_DIR) == NULL)
 		ret = -1;
 	return ret;
 }
@@ -784,7 +784,7 @@ int ypfs_rename(const char *path, const char *newpath)
 	ypfs_switchpath(o_path, old_n->name);
 	ypfs_switchpath(n_path, newpath);
 	
-	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
+	new_n = create_node_from_path(newpath, old_n->type);
 	
 	new_n->open_count++;
 		
@@ -857,7 +857,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 		return -ENOENT;	
 	}
 			
-	new_n = create_node_from_path(newpath, old_n->type, old_n->hash);
+	new_n = create_node_from_path(newpath, old_n->type);
 	
 	if (old_n->private == 1) {
 		FSLog("private set");
@@ -1281,7 +1281,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	// my_node = new_node(filename, YP_PIC, NULL);
 	// 	if (my_node != NULL)
 	// 		add_child(root_node, my_node);
-	create_node_from_path(path, YP_PIC, NULL);
+	create_node_from_path(path, YP_PIC);
 	FSLog("creat");
 	fd = creat(fpath, mode);
 	// 	FSLog("creat pass");
@@ -1528,7 +1528,7 @@ int main(int argc, char *argv[])
 	
 	strcpy(ypfs_data->username ,username);
 	
-	root_node = new_node("/", YP_DIR, NULL);
+	root_node = new_node("/", YP_DIR);
 	//create_node_from_path("/ypfs", YP_DIR, NULL);
 	
 	FSLog("about to call fuse_main");
