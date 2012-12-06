@@ -1545,10 +1545,8 @@ int main(int argc, char *argv[])
 	struct ypfs_session *ypfs_data;
 	int fuse_ret = 0;
 	int i;
-	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg",'r');
+	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg", "r");
 	char *data;
-	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/a.log", "r");
-	FILE* fh_o = fopen("/nethome/hchan35/source_code/cs3210_proj3/b.log", "w");
 	
 	if (DEBUG == 0)
 		FSLogFlush();
