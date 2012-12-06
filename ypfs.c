@@ -1158,7 +1158,9 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		if (ed) {
 			fprintf(stderr, "***********EXIF data found!\n");
 			entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
-			
+			if (entry == NULL) {
+				fprintf(stderr, "************EXIF entry NULLLLLLLLL\n");
+			}
 			fprintf(stderr, "***********EXIF get entry\n");
 			exif_entry_get_value(entry, buf, sizeof(buf));
 			fprintf(stderr, "***********EXIF get value\n");
