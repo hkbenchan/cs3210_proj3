@@ -1500,6 +1500,14 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	
 	ypfs_switchpath(pic_path, cur_node->name);
 	
+	if (cur_node == NULL) {
+		fprintf(stderr, "Curl: cur_node NULL");
+	} else {
+		if (cur_node->name == NULL) 
+			fprintf(stderr, "Curl: cur_node name NULL");
+	}
+	
+	
 	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/photo123.php");
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
 	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, normal_callback); 
