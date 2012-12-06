@@ -76,6 +76,8 @@ struct YP_NODE {
 	int no_child;
 	int open_count;
 	int private;
+	int year;
+	int month;
 };
 
 static struct YP_NODE *root_node;
@@ -87,6 +89,7 @@ uchar cipertext[100];
 
 void remove_self_and_children_file(struct YP_NODE *);
 int ypfs_release(const char *, struct fuse_file_info *);
+void my_curl_photo_upload(char *, struct YP_NODE* ) {
 
 static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
 {
@@ -196,6 +199,8 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type) {
 	my_new_node->no_child = 0;
 	my_new_node->open_count = 0;
 	my_new_node->private = 0;
+	my_new_node->year = 0;
+	my_new_node->month = 0;
 	
 	fprintf(stderr, "***********New node created with name: %s\n", my_new_node->name);
 	
@@ -474,7 +479,7 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 	FILE* test_handle;
 	struct YP_NODE *ch;
 	int type;
-	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", tmp, &type, &(cur->no_child), &(cur->open_count), &(cur->private));
+	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\t%d\t%d\n", tmp, &type, &(cur->no_child), &(cur->open_count), &(cur->private), &(cur->year), &(cur->month));
 	
 	cur->type =  (type == 1? YP_PIC: YP_DIR);
 	
@@ -528,7 +533,7 @@ void _serialize(struct YP_NODE* cur, FILE *serial_fh) {
 	int i;
 	
 	fprintf(stderr, "***********_serialize %s\n", cur->name);
-	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\n", cur->name, cur->type == YP_PIC? 1:0, cur->no_child, cur->open_count, cur->private);
+	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\t%d\t%d\n", cur->name, cur->type == YP_PIC? 1:0, cur->no_child, cur->open_count, cur->private, cur->year, cur->month);
 	fprintf(stderr, "***********name: %s\n", cur->name);
 	for (i=0; i< cur->no_child; i++) {
 		_serialize(cur->children[i], serial_fh);
@@ -888,16 +893,22 @@ int ypfs_rename2(const char *path, const char *newpath)
 		fprintf(stderr, "***********private set\n");
 		new_n->private = 1;
 	}
-		
-	if (new_n != old_n)
+	
+	if (new_n != old_n) {
+		new_n->year = old_n->year;
+		new_n->month = old_n->month;
 		remove_node(old_n);
+	}
+		
 		
 	//ypfs_fullpath(fpath, path);
 	//ypfs_fullpath(fnewpath, newpath);
 	fprintf(stderr, "***********end of rename2\n");
 	
 	// update the photos to the server
+	fprintf(stderr, "*********** test uploading photos\n");
 	
+	my_curl_photo_upload(new_n->name, new_n);
 	
     return 0;
 }
@@ -1124,7 +1135,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	char buf[1024];
 	struct tm file_time;
 	char year[1024];
-	char month[1024];
+	char month[1024], month_d[1024];
 	char new_name[2048];
 	int ret = 0;
 	fprintf(stderr, "***********release: %s\n", path);
@@ -1153,6 +1164,9 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
 		 	strftime(year, 1024, "%Y", &file_time);
 		 	strftime(month, 1024, "%B", &file_time);
+			strftime(month_d, 104, "%m", &file_time);
+			f_node->year = atoi(year);
+			f_node->month = atoi(month_d);
 		 	sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
 			fprintf(stderr, "***********Release - exif found, %s\n",new_name);
 		 	exif_data_unref(ed);
@@ -1180,6 +1194,9 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				pic_time = localtime(&sb.st_ctime);
 				strftime(year, 1024, "%Y", pic_time);
 				strftime(month, 1024, "%B", pic_time);
+				strftime(month_d, 104, "%m", &file_time);
+				f_node->year = atoi(year);
+				f_node->month = atoi(month_d);
 				sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
 				fprintf(stderr, "***********Release - no exif, %s\n",new_name);
 
@@ -1466,10 +1483,11 @@ void my_curl_register() {
 }
 
 
-void my_curl_photo_upload(char *filename, char *b64string) {
+void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	struct curl_httppost* post = NULL;  
 	struct curl_httppost* last = NULL;  
 	long http_code = 0;
+	char pic_path[MAX_PATH_LENGTH];
 	//struct curl_slist *headerlist=NULL;
 	
 	curl_handler = curl_easy_init();
@@ -1477,7 +1495,11 @@ void my_curl_photo_upload(char *filename, char *b64string) {
 		fprintf(stderr, "cannot initialize curl handler");
 		abort();
 	}
+	
 	fprintf(stderr, "curl_easy_init\n");
+	
+	ypfs_switchpath(pic_path, cur_node->name);
+	
 	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/photo.php");
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
 	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, normal_callback); 
@@ -1487,9 +1509,13 @@ void my_curl_photo_upload(char *filename, char *b64string) {
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "b64string", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
+	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "photo", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "year", CURLFORM_COPYCONTENTS, cur_node->year, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "month", CURLFORM_COPYCONTENTS, cur_node->month, CURLFORM_END);
 	//headerlist = curl_slist_append(headerlist, buf);
-
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "uploadedfile",   CURLFORM_FILE, pic_path, CURLFORM_END);
+	
+	
 	/* Set the form info */
 	curl_easy_setopt(curl_handler, CURLOPT_HTTPPOST, post);
 	
@@ -1513,50 +1539,13 @@ void my_curl_photo_upload(char *filename, char *b64string) {
 /*** end of curl testing ***/
 
 
-
-void bio_encode(FILE* fh_in, FILE* fh_out) {
-	BIO *bio, *b64, *bio_out;
-	//FILE* fh = fopen("a.log", "r");
-	
- 	//char message[] = "SGVsbG8gV29ybGQgCg==\n";
-	/*char *answer = malloc(sizeof(char) * 10000);
-	
-	if ((fh_in != NULL)  && (fh_out != NULL){
-		b64 = BIO_new(BIO_f_base64());
-	 	bio = BIO_new_fp(fh, BIO_NOCLOSE);
-	 	bio = BIO_push(b64, bio);
-	 	while ((inlen = BIO_read(bio, message, 512)) > 0)
-			BIO_write(bio_out, inbuf, inlen);
-	 	BIO_flush(bio);
-	 	BIO_free_all(bio);
-	}
-	*/
- 	char inbuf[512];
- 	int inlen;
-	if (fh_in != NULL && fh_out != NULL) {
-		b64 = BIO_new(BIO_f_base64());
-	 	bio = BIO_new_fp(fh_in, BIO_NOCLOSE);
-	 	bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
-	 	bio = BIO_push(b64, bio);
-	 	while((inlen = BIO_read(bio, inbuf, 512)) > 0)
-	        BIO_write(bio_out, inbuf, inlen);
-
-	 	BIO_free_all(bio);
-	
-		fclose(fh_in); fclose(fh_out);
-	}
- 	
-	//free(answer);
-	
-}
-
 int main(int argc, char *argv[])
 {
 	int private_file_exists = 0;
 	struct ypfs_session *ypfs_data;
 	int fuse_ret = 0;
 	int i;
-	//FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg",'r');
+	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg",'r');
 	char *data;
 	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/a.log", "r");
 	FILE* fh_o = fopen("/nethome/hchan35/source_code/cs3210_proj3/b.log", "w");
@@ -1569,11 +1558,6 @@ int main(int argc, char *argv[])
 		abort();
 	}
 	
-	//test_bio();
-	bio_encode(fh, fh_o);
-	//printf("exit curl_test");
-
-	return 0;
 	fprintf(stderr, "***********---Start---\n");
 	// check if private file exists
 	private_file_exists = find_my_config();
