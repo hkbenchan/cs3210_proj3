@@ -724,7 +724,6 @@ int apfs_rename(const char *path, const char *newpath)
 		
 	if (old_n->private == 1 && (strstr(str_c(newpath,'.'),"+private") == NULL)) {
 		// need to decrypt image
-		char *ext = str_c(path, '.');
 		char fpath2[MAX_PATH_LENGTH];
 		char fpath[MAX_PATH_LENGTH];
 		FILE *fh, *tmp_fh;
@@ -868,11 +867,7 @@ int apfs_open(const char *path, struct fuse_file_info *fi)
 	if (fi == NULL) {
 		fprintf(stderr, "***********FI is NULL\n");
 	}
-	
-	if (fi->flags == NULL) {
-		fprintf(stderr, "***********FI flags is NULL\n");
-	}
-	
+		
 	fd = open(fpath, fi->flags, 0666);
 	
 	if (fd < 0) {
@@ -1147,7 +1142,7 @@ int apfs_opendir(const char *path, struct fuse_file_info *fi)
  */
 int apfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
-    int ret = 0, i, num_slashes = 0;
+    int i, num_slashes = 0;
  	char fpath[MAX_PATH_LENGTH], *filename = (char *)path;
  	int fd;
 
@@ -1178,7 +1173,7 @@ int apfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	create_node_from_path(path, AP_PIC);
 	fprintf(stderr, "***********creat: %s \n", fpath);
 	fd = creat(fpath, mode);
-	// 	fprintf(stderr, "***********creat pass");
+	
 	if (fd < 0) {
 		fprintf(stderr, "***********fd fail\n");
 		return -errno;
@@ -1466,10 +1461,7 @@ int main(int argc, char *argv[])
 	int private_file_exists = 0;
 	struct apfs_session *apfs_data;
 	int fuse_ret = 0;
-	int i;
 	struct stat *stbuf = malloc(sizeof(struct stat));
-	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg", "r");
-	char *data;
 	
 	if (DEBUG == 0)
 		FSLogFlush();
