@@ -1,15 +1,7 @@
 /**
-CS 3210 Project 3 - YPFS
+CS 3210 Project 3 - APFS
 Author: Ho Pan Chan, Robert Harrison
 **/
-
-/*** uploading pics:
-username
-password
-pic_name  (unique)
-e.g. my_pic_2012_12_01.gif
-in base64
-****/
 
 #define FUSE_USE_VERSION 26
 
@@ -48,31 +40,30 @@ in base64
 #include <openssl/evp.h>
 
 #define DEBUG 0
-#define SERCET_LOCATION "/tmp/.config_ypfs"
-#define LOGFILE_LOCATION "/tmp/ypfs.log"
-#define TREE_LOCATION "/tmp/ypfs.tree"
+#define SERCET_LOCATION "/tmp/.config_apfs"
+#define LOGFILE_LOCATION "/tmp/apfs.log"
+#define TREE_LOCATION "/tmp/apfs.tree"
 
 #define MAX_PATH_LENGTH 500
 
-#define CURRENT_SESSION ((struct ypfs_session *) fuse_get_context()->private_data)
+#define CURRENT_SESSION ((struct apfs_session *) fuse_get_context()->private_data)
 // allow extension: .gif, .jpg, .png
 typedef unsigned char uchar;
 
-struct ypfs_session {
+struct apfs_session {
 	char username[30];
 	char password[25];
-	uchar cipertext[100];
+	uchar ciphertext[100];
 	char *mount_point;
 };
 
-typedef enum {YP_DIR, YP_PIC} YP_TYPE;
+typedef enum {AP_DIR, AP_PIC} AP_TYPE;
 
-struct YP_NODE {
+struct AP_NODE {
 	char *name;
-	//char *hash; // unique name
-	YP_TYPE type;
-	struct YP_NODE ** children;
-	struct YP_NODE* parent;
+	AP_TYPE type;
+	struct AP_NODE ** children;
+	struct AP_NODE* parent;
 	int no_child;
 	int open_count;
 	int private;
@@ -80,19 +71,19 @@ struct YP_NODE {
 	int month;
 };
 
-static struct YP_NODE *root_node;
+static struct AP_NODE *root_node;
 
-const char *ypfs_str = "Welecome to your pic filesystem!\n";
-const char *ypfs_path = "/ypfs";
+const char *apfs_str = "Welecome to  APFS: Your Picture Filesystem!\n";
+const char *apfs_path = "/apfs";
 char username[30], password[25];
-uchar cipertext[100];
+uchar ciphertext[100];
 
-void remove_self_and_children_file(struct YP_NODE *);
-int ypfs_release(const char *, struct fuse_file_info *);
-void my_curl_photo_upload(char *, struct YP_NODE*);
-void my_curl_photo_download(char *, struct YP_NODE*);
+void remove_self_and_children_file(struct AP_NODE *);
+int apfs_release(const char *, struct fuse_file_info *);
+void my_curl_photo_upload(char *, struct AP_NODE*);
+void my_curl_photo_download(char *, struct AP_NODE*);
 
-static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
+static void apfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
 {
 
 	strcpy(fpath, CURRENT_SESSION->mount_point);
@@ -100,9 +91,9 @@ static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
 
 }
 
-static void ypfs_switchpath(char fpath[MAX_PATH_LENGTH], const char *path)
+static void apfs_switchpath(char fpath[MAX_PATH_LENGTH], const char *path)
 {
-	strcpy(fpath, "/tmp/ypfs/");
+	strcpy(fpath, "/tmp/apfs/");
 	strncat(fpath, path, MAX_PATH_LENGTH);
 }
 
@@ -135,7 +126,7 @@ int find_my_config()
 	
 	if (fh != NULL) {
 		
-		ret = fscanf(fh,"%s\n%s\n%s", username, password, (char *) cipertext);
+		ret = fscanf(fh,"%s\n%s\n%s", username, password, (char *) ciphertext);
 		fclose(fh);
 		
 		if ( strcmp(username, "") != 0) {
@@ -154,10 +145,8 @@ int make_my_config()
 	fh = fopen(SERCET_LOCATION, "w");
 	
 	if (fh != NULL) {
-		fprintf(fh , "%s\n%s\n%s", username, password, (char *) cipertext);
+		fprintf(fh , "%s\n%s\n%s", username, password, (char *) ciphertext);
 		fclose(fh);
-		
-		/****** Send key request to server and store **********/
 		
 		ret = 1;		
 		
@@ -172,7 +161,7 @@ void Encrypt(uchar *in, uchar *out)
 {
     AES_KEY encryptKey;
 
-    AES_set_encrypt_key(cipertext, 256, &encryptKey);
+    AES_set_encrypt_key(ciphertext, 256, &encryptKey);
 
     AES_ecb_encrypt(in, out, &encryptKey, AES_ENCRYPT);
 
@@ -182,14 +171,14 @@ void Decrypt(uchar *in, uchar *out)
 {
     AES_KEY decryptKey;
     
-	AES_set_decrypt_key(cipertext, 256, &decryptKey);
+	AES_set_decrypt_key(ciphertext, 256, &decryptKey);
 
     AES_ecb_encrypt(in, out, &decryptKey, AES_DECRYPT);
 
 }
 
-struct YP_NODE* new_node(const char *path, YP_TYPE type) {
-	struct YP_NODE *my_new_node = malloc(sizeof(struct YP_NODE));
+struct AP_NODE* new_node(const char *path, AP_TYPE type) {
+	struct AP_NODE *my_new_node = malloc(sizeof(struct AP_NODE));
 	
 	my_new_node->name = malloc(sizeof(char) * (strlen(path) + 1));
 	strcpy(my_new_node->name, path);
@@ -205,22 +194,11 @@ struct YP_NODE* new_node(const char *path, YP_TYPE type) {
 	
 	fprintf(stderr, "***********New node created with name: %s\n", my_new_node->name);
 	
-	/*
-	my_new_node->hash = NULL;
-	
-	if (type == YP_PIC && hash == NULL) {
-		my_new_node->hash = malloc(sizeof(char) * 50);
-		sprintf(my_new_node->hash, "%ld", random() % 10000000000);
-	} else if (type == YP_DIR && hash) {
-		my_new_node->hash = malloc(sizeof(char) * 50);
-		sprintf(my_new_node->hash, "%s", hash);
-	}
-	*/
 	return my_new_node;
 }
 
-struct YP_NODE* add_child(struct YP_NODE *parent, struct YP_NODE *child) {
-	struct YP_NODE** tmp_child_list;
+struct AP_NODE* add_child(struct AP_NODE *parent, struct AP_NODE *child) {
+	struct AP_NODE** tmp_child_list;
 	int tmp_no_child;
 	int i;
 	
@@ -232,7 +210,7 @@ struct YP_NODE* add_child(struct YP_NODE *parent, struct YP_NODE *child) {
 	tmp_child_list = parent->children;
 	tmp_no_child = parent->no_child;
 	
-	parent->children = malloc((tmp_no_child+1)*sizeof(struct YP_NODE*));
+	parent->children = malloc((tmp_no_child+1)*sizeof(struct AP_NODE*));
 	
 	for (i=0; i<tmp_no_child; i++) {
 		(parent->children)[i] = tmp_child_list[i];
@@ -248,8 +226,8 @@ struct YP_NODE* add_child(struct YP_NODE *parent, struct YP_NODE *child) {
 	return child;
 }
 
-void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
-	struct YP_NODE** tmp_child_list;
+void remove_child(struct AP_NODE* parent, struct AP_NODE* child) {
+	struct AP_NODE** tmp_child_list;
 	int tmp_no_child;
 	int i, active = 0;
 	
@@ -268,7 +246,7 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 			parent->children = NULL;
 			fprintf(stderr, "***********Remove child: parent %s now have 0 child\n", parent->name);
 		} else {
-			parent->children = malloc((tmp_no_child-1)*sizeof(struct YP_NODE*));
+			parent->children = malloc((tmp_no_child-1)*sizeof(struct AP_NODE*));
 
 			for (i=0; i<tmp_no_child; i++) {
 				if (tmp_child_list[i] != child) {
@@ -291,12 +269,12 @@ void remove_child(struct YP_NODE* parent, struct YP_NODE* child) {
 		
 }
 
-void remove_node(struct YP_NODE *node) {
+void remove_node(struct AP_NODE *node) {
 	fprintf(stderr, "***********Remove node %s from parent %s\n", node->name, node->parent->name);
 	remove_child(node->parent, node);
 }
 
-void remove_self_and_children_file(struct YP_NODE *parent) {
+void remove_self_and_children_file(struct AP_NODE *parent) {
 	int i;
 	char absolute_path[MAX_PATH_LENGTH];
 	
@@ -305,10 +283,10 @@ void remove_self_and_children_file(struct YP_NODE *parent) {
 	}
 	
 	// remove self file
-	ypfs_switchpath(absolute_path, parent->name);
+	apfs_switchpath(absolute_path, parent->name);
 	fprintf(stderr, "***********remove: %s\n", absolute_path);
 	
-	if (parent->type == YP_DIR)
+	if (parent->type == AP_DIR)
 		rmdir(absolute_path);
 	else
 		unlink(absolute_path);
@@ -371,7 +349,7 @@ char* cut_extension(const char* filename)
 }
 
 
-struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create, YP_TYPE type, int skip_ext)
+struct AP_NODE* node_resolver(const char *path, struct AP_NODE *cur, int create, AP_TYPE type, int skip_ext)
 {
 	char name[MAX_PATH_LENGTH];
 	int i = 0;
@@ -432,26 +410,26 @@ struct YP_NODE* node_resolver(const char *path, struct YP_NODE *cur, int create,
 	if (create == 1) {
 		// add a child to cur and continue the process
 		fprintf(stderr, "***********add child %s\n", name);
-		return node_resolver(path, add_child(cur, new_node(name, last_node == 1 ? type : YP_DIR)), create, type, skip_ext);
+		return node_resolver(path, add_child(cur, new_node(name, last_node == 1 ? type : AP_DIR)), create, type, skip_ext);
 	}
 
 	return NULL;
 }
 
 
-struct YP_NODE* search_node(const char *path) {
+struct AP_NODE* search_node(const char *path) {
 	return node_resolver(path, root_node, 0, 0, 0);
 }
 
-struct YP_NODE* search_node_no_extension(const char *path) {
+struct AP_NODE* search_node_no_extension(const char *path) {
 	return node_resolver(path, root_node, 0, 0, 1);
 }
 
-struct YP_NODE* create_node_from_path(const char *path, YP_TYPE type) {
+struct AP_NODE* create_node_from_path(const char *path, AP_TYPE type) {
 	return node_resolver(path, root_node, 1, type, 0);
 }
 
-void print_tree(struct YP_NODE* head, const char *pre) {
+void print_tree(struct AP_NODE* head, const char *pre) {
 	char preN[20];
 	char path_name[100];
 	int i;
@@ -474,15 +452,15 @@ void print_full_tree() {
 }
 
 
-void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
+void _deserialize(struct AP_NODE* cur, FILE *serial_fh) {
 	int i;
 	char tmp[MAX_PATH_LENGTH], path[MAX_PATH_LENGTH];
 	FILE* test_handle;
-	struct YP_NODE *ch;
+	struct AP_NODE *ch;
 	int type;
 	fscanf(serial_fh, "%s\t%d\t%d\t%d\t%d\t%d\t%d\n", tmp, &type, &(cur->no_child), &(cur->open_count), &(cur->private), &(cur->year), &(cur->month));
 	
-	cur->type =  (type == 1? YP_PIC: YP_DIR);
+	cur->type =  (type == 1? AP_PIC: AP_DIR);
 	
 	if (cur->name) {
 		free(cur->name);
@@ -490,8 +468,8 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 		strcpy(cur->name, tmp);
 	}
 	
-	if (cur->type == YP_PIC) {
-		ypfs_switchpath(path, tmp);
+	if (cur->type == AP_PIC) {
+		apfs_switchpath(path, tmp);
 		test_handle = fopen(path, "r");
 
 		if (test_handle == NULL) {
@@ -509,7 +487,7 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 	
 	cur->name = malloc(sizeof(char) * (strlen(tmp)+1));
 	strcpy(cur->name, tmp);
-	cur->children = malloc(sizeof(struct YP_NODE *) * (cur->no_child));
+	cur->children = malloc(sizeof(struct AP_NODE *) * (cur->no_child));
 	for (i = 0; i< cur->no_child; i++) {
 		ch = new_node("/t", cur->type);
 		_deserialize(ch, serial_fh);
@@ -533,12 +511,11 @@ void deserialize() {
 }
 
 
-
-void _serialize(struct YP_NODE* cur, FILE *serial_fh) {
+void _serialize(struct AP_NODE* cur, FILE *serial_fh) {
 	int i;
 	
 	fprintf(stderr, "***********_serialize %s\n", cur->name);
-	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\t%d\t%d\n", cur->name, cur->type == YP_PIC? 1:0, cur->no_child, cur->open_count, cur->private, cur->year, cur->month);
+	fprintf(serial_fh, "%s\t%d\t%d\t%d\t%d\t%d\t%d\n", cur->name, cur->type == AP_PIC? 1:0, cur->no_child, cur->open_count, cur->private, cur->year, cur->month);
 	fprintf(stderr, "***********name: %s\n", cur->name);
 	for (i=0; i< cur->no_child; i++) {
 		_serialize(cur->children[i], serial_fh);
@@ -576,11 +553,11 @@ void serialize() {
  * mount option is given.
  */
 
-int ypfs_getattr(const char *path, struct stat *stbuf)
+int apfs_getattr(const char *path, struct stat *stbuf)
 {
     int ret = 0;
 	char fpath[MAX_PATH_LENGTH];
-	struct YP_NODE *my_node, *my_node_no_ext;
+	struct AP_NODE *my_node, *my_node_no_ext;
 
 	fprintf(stderr, "***********getattr: %s\n", path);
 
@@ -593,26 +570,23 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 		return -ENOENT;
 	}
 
-	//ypfs_switchpath(fpath, cut_extension(my_node_no_ext->name));
-	ypfs_switchpath(fpath, my_node_no_ext->name);
-	if (my_node_no_ext && my_node_no_ext->type == YP_PIC && my_node_no_ext != my_node) {
+	apfs_switchpath(fpath, my_node_no_ext->name);
+	if (my_node_no_ext && my_node_no_ext->type == AP_PIC && my_node_no_ext != my_node) {
 		
 		// for stat later in function
 		if (strchr(path, '.') != NULL)
 			strcat(fpath, strchr(path, '.'));
 			
-	} //else if (my_node_no_ext->type == YP_PIC){
-		//strcat(fpath, strchr(my_node_no_ext->name,'.'));
-	//}
+	}
 	
 	memset(stbuf, 0, sizeof(struct stat));
 	fprintf(stderr, "***********getattr fpath: %s\n", fpath);
-	if (my_node_no_ext->type == YP_DIR && strstr(path, "ypfs")) {
-		// temp/ypfs/{some_dir}
+	if (my_node_no_ext->type == AP_DIR && strstr(path, "apfs")) {
+		// temp/apfs/{some_dir}
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
-	} else if (my_node_no_ext->type == YP_DIR) {
-		// temp/{some_dir} but not ypfs
+	} else if (my_node_no_ext->type == AP_DIR) {
+		// temp/{some_dir} but not apfs
 		stbuf->st_mode = S_IFDIR | 0444;
 		stbuf->st_nlink = 2;
 	} else if (my_node_no_ext != NULL && my_node != my_node_no_ext) {
@@ -633,49 +607,13 @@ int ypfs_getattr(const char *path, struct stat *stbuf)
 }
 
 
-/** Read the target of a symbolic link
- *
- * The buffer should be filled with a null terminated string.  The
- * buffer size argument includes the space for the terminating
- * null character.  If the linkname is too long to fit in the
- * buffer, it should be truncated.  The return value should be 0
- * for success.
- */
-// Note the system readlink() will truncate and lose the terminating
-// null.  So, the size passed to to the system readlink() must be one
-// less than the size passed to bb_readlink()
-// bb_readlink() code by Bernardo F Costa (thanks!)
-/*
-int ypfs_readlink(const char *path, char *link, size_t size)
-{
-    int ret = 0;
-
-    char fpath[MAX_PATH_LENGTH];
-    
-    log_msg("bb_readlink(path=\"%s\", link=\"%s\", size=%d)\n",
-	  path, link, size);
-    bb_fullpath(fpath, path);
-    
-    ret = readlink(fpath, link, size - 1);
-    if (ret < 0)
-	ret = bb_error("bb_readlink readlink");
-    else  {
-	link[ret] = '\0';
-	ret = 0;
-    }
-
-	fprintf(stderr, "***********readlink");
-    return ret;
-}
-*/
-
 /** Create a file node
  *
  * There is no create() operation, mknod() will be called for
  * creation of all non-directory, non-symlink nodes.
  */
 // shouldn't that comment be "if" there is no.... ?
-int ypfs_mknod(const char *path, mode_t mode, dev_t dev)
+int apfs_mknod(const char *path, mode_t mode, dev_t dev)
 {
     int ret = 0;
 	fprintf(stderr, "***********mknod");
@@ -683,15 +621,12 @@ int ypfs_mknod(const char *path, mode_t mode, dev_t dev)
 }
 
 /** Create a directory */
-int ypfs_mkdir(const char* path, mode_t mode){
+int apfs_mkdir(const char* path, mode_t mode){
 	int ret = 0;
-	//char fpath[MAX_PATH_LENGTH];
 	
 	fprintf(stderr, "***********mkdir: %s\n", path);
 
-	//ypfs_fullpath(fpath, path);
-	
-	if (create_node_from_path(path, YP_DIR) == NULL)
+	if (create_node_from_path(path, AP_DIR) == NULL)
 		ret = -1;
 	return ret;
 }
@@ -719,13 +654,13 @@ int ypfs_mkdir(const char* path, mode_t mode){
  *
  * Introduced in version 2.3
  */
-int ypfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+int apfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                          off_t offset, struct fuse_file_info *fi)
 {
 	int i;
     (void) offset;
     (void) fi;
-	struct YP_NODE *my_node;
+	struct AP_NODE *my_node;
 	fprintf(stderr, "***********readdir: %s\n", path);
 	
 	my_node = search_node(path);
@@ -747,15 +682,15 @@ int ypfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 }
 
 /** Remove a file */
-int ypfs_unlink(const char *path)
+int apfs_unlink(const char *path)
 {
     int ret = 0;
 	char fpath[MAX_PATH_LENGTH];
-	struct YP_NODE *f_node = search_node(path);
+	struct AP_NODE *f_node = search_node(path);
 	fprintf(stderr, "***********unlink: %s\n", path);
 
 	if (f_node != NULL) {
-		ypfs_switchpath(fpath, f_node->name);
+		apfs_switchpath(fpath, f_node->name);
 		remove_node(f_node);
 	}	
 	
@@ -766,52 +701,11 @@ int ypfs_unlink(const char *path)
     return ret;
 }
 
-
-/** Remove a directory */
-/*
-int ypfs_rmdir(const char *path)
-{
-    int ret = 0;
- 	char fpath[MAX_PATH_LENGTH];
-	fprintf(stderr, "***********rmdir: %s\n", path);
- 	
- 	ypfs_fullpath(fpath, path);
- 	//     
- 	ret = rmdir(fpath);
- 	if (ret < 0)
-		ret = -errno;
-	
-    return ret;
-}
-*/
-
-/** Create a symbolic link */
-// The parameters here are a little bit confusing, but do correspond
-// to the symlink() system call.  The 'path' is where the link points,
-// while the 'link' is the link itself.  So we need to leave the path
-// unaltered, but insert the link into the mounted directory.
-/*
-int ypfs_symlink(const char *path, const char *link)
-{
-    int ret = 0;
-	char flink[MAX_PATH_LENGTH];
-	fprintf(stderr, "***********symlink");
-	
-	ypfs_fullpath(flink, link);
-	 
-	ret = symlink(path, flink);
-	if (ret < 0)
-		ret = -errno;
-	
-    return ret;
-}
-*/
-
 /** Rename a file */
 // both path and newpath are fs-relative
-int ypfs_rename(const char *path, const char *newpath)
+int apfs_rename(const char *path, const char *newpath)
 {
-	struct YP_NODE *old_n, *new_n;
+	struct AP_NODE *old_n, *new_n;
 	char o_path[MAX_PATH_LENGTH], n_path[MAX_PATH_LENGTH];
 	fprintf(stderr, "***********rename: from %s to %s\n",path, newpath);
 	old_n = search_node(path);
@@ -821,8 +715,8 @@ int ypfs_rename(const char *path, const char *newpath)
 		return -ENOENT;	
 	}
 	
-	ypfs_switchpath(o_path, old_n->name);
-	ypfs_switchpath(n_path, newpath);
+	apfs_switchpath(o_path, old_n->name);
+	apfs_switchpath(n_path, newpath);
 	
 	new_n = create_node_from_path(newpath, old_n->type);
 	
@@ -837,7 +731,7 @@ int ypfs_rename(const char *path, const char *newpath)
 		uchar in[2 * AES_BLOCK_SIZE], out[2 * AES_BLOCK_SIZE];
 		
 		fprintf(stderr, "***********Decrypt needed\n");
-		ypfs_switchpath(fpath, old_n->name);
+		apfs_switchpath(fpath, old_n->name);
 		
 		strcpy(fpath2, fpath);
 		strcat(fpath2, "tmp");
@@ -871,19 +765,17 @@ int ypfs_rename(const char *path, const char *newpath)
 	fprintf(stderr, "***********Rename: Move file from: %s to %s\n", o_path, n_path);
 	rename(o_path, n_path);
 	
-	ypfs_release(newpath, NULL);
+	apfs_release(newpath, NULL);
 	
-	//ypfs_fullpath(fpath, path);
-	//ypfs_fullpath(fnewpath, newpath);
 	fprintf(stderr, "***********end of rename\n");
     return 0;
 }
 
-/** Rename a file - use by ypfs_release only */
+/** Rename a file - use by apfs_release only */
 // both path and newpath are fs-relative
-int ypfs_rename2(const char *path, const char *newpath)
+int apfs_rename2(const char *path, const char *newpath)
 {
-	struct YP_NODE *old_n, *new_n;
+	struct AP_NODE *old_n, *new_n;
 	fprintf(stderr, "***********rename2: %s to %s\n", path, newpath);
 	old_n = search_node(path);
 	
@@ -905,10 +797,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 		fprintf(stderr, "*********** old node year %d, old node month %d\n", old_n->year, old_n->month);
 		remove_node(old_n);
 	}
-		
-		
-	//ypfs_fullpath(fpath, path);
-	//ypfs_fullpath(fnewpath, newpath);
+	
 	fprintf(stderr, "***********end of rename2\n");
 	
 	// update the photos to the server
@@ -916,37 +805,23 @@ int ypfs_rename2(const char *path, const char *newpath)
 	
 	my_curl_photo_upload(new_n->name, new_n);
 	fprintf(stderr, "*********** finish upload\n");
-	//my_curl_photo_download(new_n->name, new_n);
     return 0;
 }
 
 /** Change the size of a file */
-int ypfs_truncate(const char *path, off_t newsize)
+int apfs_truncate(const char *path, off_t newsize)
 {
     int ret = 0;
 	char fpath[MAX_PATH_LENGTH];
-	struct YP_NODE *f_node = search_node_no_extension(path), *r_node = search_node(path);
+	struct AP_NODE *f_node = search_node_no_extension(path), *r_node = search_node(path);
 	fprintf(stderr, "***********truncate: %s\n", path);
 	
-	ypfs_switchpath(fpath, path);
+	apfs_switchpath(fpath, path);
 	
 	if (f_node != r_node) {
 		strcat(fpath, strchr(path, '.'));
 	}
 	
-	/*
-		char full_file_name[1000];
-		NODE file_node = node_ignore_extension(path);
-		NODE real_node = node_for_path(path);
-		mylog("truncate");
-		to_full_path(file_node->hash, full_file_name);
-		if (file_node != real_node) {
-		strcat(full_file_name, strchr(path, '.'));
-		}
-		return truncate(full_file_name, offset);
-	
-	*/
-		
 	ret = truncate(fpath, newsize);
 	if (ret < 0)
 		ret = -errno;
@@ -956,7 +831,7 @@ int ypfs_truncate(const char *path, off_t newsize)
 
 /** Change the access and/or modification times of a file */
 /** Change the access and modification times of a file with nanosecond resolution */
-int ypfs_utimens(const char *path, const struct timespec tv[2])
+int apfs_utimens(const char *path, const struct timespec tv[2])
 {
 	int ret = 0;
 	fprintf(stderr, "***********utimens: %s\n",path);
@@ -974,11 +849,11 @@ int ypfs_utimens(const char *path, const struct timespec tv[2])
  *
  * Changed in version 2.2
  */
-int ypfs_open(const char *path, struct fuse_file_info *fi)
+int apfs_open(const char *path, struct fuse_file_info *fi)
 {
 	int fd = -1, ret = 0;
 	char fpath[MAX_PATH_LENGTH];
-	struct YP_NODE *my_node;
+	struct AP_NODE *my_node;
 	fprintf(stderr, "***********open: %s\n", path);
 	
 	my_node = search_node_no_extension(path);
@@ -988,32 +863,27 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 		return -ENOENT;
 	}
 	
-	/*
-	if (strcmp( strstr(path, "."), strstr(my_node->name, ".") ) != 0) {
-		strcat(fpath, strstr(path, "."));
-	}
-	*/
-	ypfs_switchpath(fpath, my_node->name);
+	apfs_switchpath(fpath, my_node->name);
 	fprintf(stderr, "***********Before real open: %s\n", fpath);
 	if (fi == NULL) {
-		fprintf(stderr, "***********FI is NULL");
+		fprintf(stderr, "***********FI is NULL\n");
 	}
 	
 	if (fi->flags == NULL) {
-		fprintf(stderr, "***********FI flags is NULL");
+		fprintf(stderr, "***********FI flags is NULL\n");
 	}
 	
 	fd = open(fpath, fi->flags, 0666);
 	
 	if (fd < 0) {
 		ret = -errno;
-		fprintf(stderr, "***********Fail in fd open");
+		fprintf(stderr, "***********Fail in fd open\n");
 		return ret;
 	}
     fi->fh = fd;
 
 	my_node->open_count++;
-	fprintf(stderr, "***********open done");
+	fprintf(stderr, "***********open done\n");
     return ret;
 }
 
@@ -1034,11 +904,11 @@ int ypfs_open(const char *path, struct fuse_file_info *fi)
 // can return with anything up to the amount of data requested. nor
 // with the fusexmp code which returns the amount of data also
 // returned by read.
-int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
+int apfs_read(const char *path, char *buf, size_t size, off_t offset,
                       struct fuse_file_info *fi)
 {
 	int ret = 0;
-	struct YP_NODE *my_node;
+	struct AP_NODE *my_node;
 	fprintf(stderr, "***********Read path: %s\n", path);
 	my_node = search_node_no_extension(path);
 	
@@ -1064,7 +934,7 @@ int ypfs_read(const char *path, char *buf, size_t size, off_t offset,
  */
 // As  with read(), the documentation above is inconsistent with the
 // documentation for the write() system call.
-int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi){
+int apfs_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi){
 	
 	int ret = 0;
 	fprintf(stderr, "***********write %s\n",path);
@@ -1084,23 +954,18 @@ int ypfs_write(const char* path, char *buf, size_t size, off_t offset, struct fu
  * Replaced 'struct statfs' parameter with 'struct statvfs' in
  * version 2.5
  */
-int ypfs_statfs(const char *path, struct statvfs *statv)
+int apfs_statfs(const char *path, struct statvfs *statv)
 {
     int ret = 0;
     char fpath[MAX_PATH_LENGTH];
-    //     
-    //     log_msg("\nbb_statfs(path=\"%s\", statv=0x%08x)\n",
-    // 	    path, statv);
+
 	fprintf(stderr, "***********statfs: %s\n",path);
-    ypfs_switchpath(fpath, path);
-    //     
+    apfs_switchpath(fpath, path);
+
     // get stats for underlying filesystem
     ret = statvfs(fpath, statv);
     if (ret < 0)
      	ret = -errno;
-    //     
-    //     log_statvfs(statv);
-	
     return ret;
 }
 
@@ -1119,17 +984,15 @@ int ypfs_statfs(const char *path, struct statvfs *statv)
  *
  * Changed in version 2.2
  */
-int ypfs_release(const char *path, struct fuse_file_info *fi){
+int apfs_release(const char *path, struct fuse_file_info *fi){
 	
 	// this one is called when a file is closed
 	// handle the file here
-	
-	// TO DO:
-	
+
 	ExifData *ed;
 	ExifEntry *entry;
 	char fpath[1000];
-	struct YP_NODE *f_node = search_node_no_extension(path);
+	struct AP_NODE *f_node = search_node_no_extension(path);
 	char buf[1024];
 	struct tm file_time;
 	char year[1024];
@@ -1142,7 +1005,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		return 0;
 	}
 
-	ypfs_switchpath(fpath, f_node->name);
+	apfs_switchpath(fpath, f_node->name);
 	if (fi != NULL)
 		ret = close(fi->fh);
 	f_node->open_count--;
@@ -1181,7 +1044,6 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		} else {
 			int num_slashes = 0;
 			int i;
-			//time_t rawtime;
 
 			for (i = 0; i < strlen(path); i++) {
 				if (path[i] == '/')
@@ -1197,7 +1059,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				        perror("stat");
 				        exit(EXIT_FAILURE);
 				}
-				fprintf(stderr, "***********Pass fstat");
+				fprintf(stderr, "***********Pass fstat\n");
 				
 				pic_time = localtime(&sb.st_ctime);
 				strftime(year, 1024, "%Y", pic_time);
@@ -1239,7 +1101,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		if (strcmp(path,new_name) == 0){
 			fprintf(stderr, "************** Path and new_name are the same\n");
 		} else {
-			ypfs_rename2(path, new_name);
+			apfs_rename2(path, new_name);
 		}
 
 	}
@@ -1255,43 +1117,21 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
  *
  * Introduced in version 2.3
  */
-int ypfs_opendir(const char *path, struct fuse_file_info *fi)
+int apfs_opendir(const char *path, struct fuse_file_info *fi)
 {
     
     int ret = -1;
-	struct YP_NODE *my_node = search_node(path);
-	//DIR *dp;
+	struct AP_NODE *my_node = search_node(path);
     char fpath[MAX_PATH_LENGTH];
 	fprintf(stderr, "***********opendir: %s\n",path);
 
-    ypfs_fullpath(fpath, path);
+    apfs_fullpath(fpath, path);
    	
-	if (my_node && my_node->type == YP_DIR)
+	if (my_node && my_node->type == AP_DIR)
 		ret = 0;
 	
     return ret;
 }
-
-
-/** Release directory
- *
- * Introduced in version 2.3
- */
-/*
-int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
-{
-    int ret = 0;
-    fprintf(stderr, "***********releasedir");
-    // log_msg("\nbb_releasedir(path=\"%s\", fi=0x%08x)\n",
-    // 	    path, fi);
-    //    log_fi(fi);
-    //    
-    closedir((DIR *) (uintptr_t) fi->fh);
-	
-    return ret;
-}
-*/
-
 
 /**
  * Create and open a file
@@ -1305,15 +1145,13 @@ int ypfs_releasedir(const char *path, struct fuse_file_info *fi)
  *
  * Introduced in version 2.5
  */
-int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
+int apfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
     int ret = 0, i, num_slashes = 0;
-	// struct YP_NODE *my_node;
  	char fpath[MAX_PATH_LENGTH], *filename = (char *)path;
  	int fd;
 
-	
-	ypfs_switchpath(fpath, path);
+	apfs_switchpath(fpath, path);
 	
 	fprintf(stderr, "***********Create: path: %s and fpath: %s\n", path, fpath);
 	
@@ -1331,16 +1169,13 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 		return -1;
 	}
 	
-	if (num_slashes > 1 || strstr(path, "/ypfs")) {
+	if (num_slashes > 1 || strstr(path, "/apfs")) {
 		return -1;
 	}
 	
 	fprintf(stderr, "***********Create test pass\n");
 	
-	// my_node = new_node(filename, YP_PIC, NULL);
-	// 	if (my_node != NULL)
-	// 		add_child(root_node, my_node);
-	create_node_from_path(path, YP_PIC);
+	create_node_from_path(path, AP_PIC);
 	fprintf(stderr, "***********creat: %s \n", fpath);
 	fd = creat(fpath, mode);
 	// 	fprintf(stderr, "***********creat pass");
@@ -1350,12 +1185,7 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	}
 	
 	fi->fh = fd;
-	// 		
-	// 	fi->fh = fd;
-	// 	
-	// 	return fd;
-	
-	//return ypfs_open(path, fi);
+
 	return 0;
 	
 	
@@ -1379,13 +1209,12 @@ int ypfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 // parameter coming in here, or else the fact should be documented
 // (and this might as well return void, as it did in older versions of
 // FUSE).
-void *ypfs_init(struct fuse_conn_info *conn)
+void *apfs_init(struct fuse_conn_info *conn)
 {
 	fprintf(stderr, "***********init\n");
-    //log_msg("\nbb_init()\n");
 	// read the tree data
 	deserialize();
-	return (struct ypfs_session *)fuse_get_context()->private_data;
+	return (struct apfs_session *)fuse_get_context()->private_data;
 }
 
 /**
@@ -1395,9 +1224,7 @@ void *ypfs_init(struct fuse_conn_info *conn)
  *
  * Introduced in version 2.3
  */
-void ypfs_destroy(void *userdata) {
-	
-	//printf("Bye bye %s\n", username);
+void apfs_destroy(void *userdata) {
 	
 	// constrcut the tree data
 	serialize();
@@ -1413,23 +1240,23 @@ void ypfs_destroy(void *userdata) {
 
 
 
-struct fuse_operations ypfs_oper = {
-    .getattr	= ypfs_getattr,
-	.readdir	= ypfs_readdir,
-	.open		= ypfs_open,
-	.read		= ypfs_read,
-	.create		= ypfs_create,
-	.write		= ypfs_write,
-	.utimens	= ypfs_utimens,
-	.mknod		= ypfs_mknod,
-	.release	= ypfs_release,
-	.truncate	= ypfs_truncate,
-	.unlink		= ypfs_unlink,
-	.rename		= ypfs_rename,
-	.mkdir		= ypfs_mkdir,
-	.opendir	= ypfs_opendir,
-	.init		= ypfs_init,
-	.destroy	= ypfs_destroy
+struct fuse_operations apfs_oper = {
+    .getattr	= apfs_getattr,
+	.readdir	= apfs_readdir,
+	.open		= apfs_open,
+	.read		= apfs_read,
+	.create		= apfs_create,
+	.write		= apfs_write,
+	.utimens	= apfs_utimens,
+	.mknod		= apfs_mknod,
+	.release	= apfs_release,
+	.truncate	= apfs_truncate,
+	.unlink		= apfs_unlink,
+	.rename		= apfs_rename,
+	.mkdir		= apfs_mkdir,
+	.opendir	= apfs_opendir,
+	.init		= apfs_init,
+	.destroy	= apfs_destroy
 };
 
 
@@ -1457,23 +1284,19 @@ void my_curl_register() {
 	struct curl_httppost* post = NULL;  
 	struct curl_httppost* last = NULL;  
 	long http_code = 0;
-	//struct curl_slist *headerlist=NULL;
 	
 	curl_handler = curl_easy_init();
 	if (curl_handler == NULL) {
-		fprintf(stderr, "cannot initialize curl handler");
+		fprintf(stderr, "cannot initialize curl handler\n");
 		abort();
 	}
 	fprintf(stderr, "curl_easy_init\n");
 	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/register.php");
-	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
 	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, normal_callback); 
 	
 	/* Add simple name/content section */
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
-
-	//headerlist = curl_slist_append(headerlist, buf);
 
 	/* Set the form info */
 	curl_easy_setopt(curl_handler, CURLOPT_HTTPPOST, post);
@@ -1486,15 +1309,14 @@ void my_curl_register() {
 	} else {
 		fprintf(stderr, "curl abort by callback\n");
 	}
-
-	//printf("curl return code : %s\n", curl_easy_strerror(curl_code));
+	
 	curl_formfree(post);
 	curl_easy_cleanup(curl_handler);
 	fprintf(stderr, "curl_easy_cleanup\n");
 }
 
 
-void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
+void my_curl_photo_upload(char *filename, struct AP_NODE* cur_node) {
 	CURL *curl_handler;
 	CURLcode curl_code;
 	struct curl_httppost* post = NULL;  
@@ -1502,24 +1324,23 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	long http_code = 0;
 	char pic_path[MAX_PATH_LENGTH];
 	char year[4] , month[2];
-	//struct curl_slist *headerlist=NULL;
 	
 	curl_handler = curl_easy_init();
 	if (curl_handler == NULL) {
-		fprintf(stderr, "cannot initialize curl handler");
+		fprintf(stderr, "cannot initialize curl handler\n");
 		abort();
 	}
 	
 	fprintf(stderr, "curl_easy_init\n");
 	
-	ypfs_switchpath(pic_path, cur_node->name);
+	apfs_switchpath(pic_path, cur_node->name);
 	
 	if (cur_node == NULL) {
-		fprintf(stderr, "Curl: cur_node NULL");
+		fprintf(stderr, "Curl: cur_node NULL\n");
 		return ;
 	} else {
 		if (cur_node->name == NULL) 
-			fprintf(stderr, "Curl: cur_node name NULL");
+			fprintf(stderr, "Curl: cur_node name NULL\n");
 		
 		fprintf(stderr, "*********** Curl: cur_node %s year %d month %d\n", cur_node->name, cur_node->year, cur_node->month);
 	}
@@ -1530,7 +1351,6 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	fprintf(stderr, "*********** Curl: cur_node year %s month %s\n", year, month);
 	
 	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/photo.php");
-	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
 	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, normal_callback); 
 	fprintf(stderr, "curl_add_post opt\n");
 	
@@ -1539,10 +1359,8 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
-	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "photo", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "year", CURLFORM_COPYCONTENTS, year, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "month", CURLFORM_COPYCONTENTS, month, CURLFORM_END);
-	//headerlist = curl_slist_append(headerlist, buf);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "uploadedfile",   CURLFORM_FILE, pic_path, CURLFORM_END);
 	
 	
@@ -1558,7 +1376,6 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 		fprintf(stderr, "curl abort by callback\n");
 	}
 
-	//printf("curl return code : %s\n", curl_easy_strerror(curl_code));
 	curl_formfree(post);
 	curl_easy_cleanup(curl_handler);
 	fprintf(stderr, "curl_easy_cleanup\n");
@@ -1567,27 +1384,13 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 // feedback from server
 static size_t download_callback(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-	// size_t retcode;
-	// 	curl_off_t nread;
- 
-	/* in real-world cases, this would probably get this data differently
-	   as this fread() stuff is exactly what the library already would do
-	   by default internally */ 
-	/*retcode = fread(ptr, size, nmemb, stream);
-    nread = (curl_off_t)retcode;
-    
-  	fprintf(stderr, "Server Return: %s\n", ptr);
- 	*/
-
 	size_t written;
 	fprintf(stderr, "***********download_callback calls\n");
 	written = fwrite(ptr, size, nmemb, stream);
 	return written;
-
-	//return retcode;
 }
 
-void my_curl_photo_download(char *filename, struct YP_NODE* cur_node) {
+void my_curl_photo_download(char *filename, struct AP_NODE* cur_node) {
 	CURL *curl_handler;
 	CURLcode curl_code;
 	struct curl_httppost* post = NULL;  
@@ -1596,26 +1399,25 @@ void my_curl_photo_download(char *filename, struct YP_NODE* cur_node) {
 	char pic_path[MAX_PATH_LENGTH];
 	char year[4] , month[2];
 	FILE *fp;
-	//struct curl_slist *headerlist=NULL;
 		
 	curl_handler = curl_easy_init();
 	if (curl_handler == NULL) {
-		fprintf(stderr, "cannot initialize curl handler");
+		fprintf(stderr, "cannot initialize curl handler\n");
 		abort();
 	}
 	
 	fprintf(stderr, "curl_easy_init\n");
 	
-	ypfs_switchpath(pic_path, filename);
+	apfs_switchpath(pic_path, filename);
 	
 	fp = fopen(pic_path, "w");
 	
 	if (cur_node == NULL) {
-		fprintf(stderr, "Curl: cur_node NULL");
+		fprintf(stderr, "Curl: cur_node NULL\n");
 		return ;
 	} else {
 		if (cur_node->name == NULL) 
-			fprintf(stderr, "Curl: cur_node name NULL");
+			fprintf(stderr, "Curl: cur_node name NULL\n");
 		
 		fprintf(stderr, "*********** Curl: cur_node year %d month %d\n", cur_node->year, cur_node->month);
 	}
@@ -1635,12 +1437,8 @@ void my_curl_photo_download(char *filename, struct YP_NODE* cur_node) {
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
-	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "photo", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "year", CURLFORM_COPYCONTENTS, year, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "month", CURLFORM_COPYCONTENTS, month, CURLFORM_END);
-	//headerlist = curl_slist_append(headerlist, buf);
-	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "uploadedfile",   CURLFORM_FILE, pic_path, CURLFORM_END);
-	
 	
 	/* Set the form info */
 	curl_easy_setopt(curl_handler, CURLOPT_HTTPPOST, post);
@@ -1654,7 +1452,6 @@ void my_curl_photo_download(char *filename, struct YP_NODE* cur_node) {
 		fprintf(stderr, "curl abort by callback\n");
 	}
 
-	//printf("curl return code : %s\n", curl_easy_strerror(curl_code));
 	curl_formfree(post);
 	curl_easy_cleanup(curl_handler);
 	fclose(fp);
@@ -1667,7 +1464,7 @@ void my_curl_photo_download(char *filename, struct YP_NODE* cur_node) {
 int main(int argc, char *argv[])
 {
 	int private_file_exists = 0;
-	struct ypfs_session *ypfs_data;
+	struct apfs_session *apfs_data;
 	int fuse_ret = 0;
 	int i;
 	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg", "r");
@@ -1677,7 +1474,7 @@ int main(int argc, char *argv[])
 		FSLogFlush();
 	
 	if (argc<2) {
-		printf("./ypfs MOUNT_POINT\n");
+		printf("./apfs MOUNT_POINT\n");
 		abort();
 	}
 	
@@ -1692,7 +1489,7 @@ int main(int argc, char *argv[])
 		printf("Password: ");
 		scanf("%s", password);
 		printf("Encrypt description: ");
-		scanf("%s", (char *)cipertext);
+		scanf("%s", (char *)ciphertext);
 		if (make_my_config() == 0) {
 			return -1;
 		}
@@ -1708,37 +1505,25 @@ int main(int argc, char *argv[])
 	
 	// try register for the server
 	my_curl_register();
+
+	apfs_data = malloc(sizeof(struct apfs_session));
 	
-	// test upload photo
-	//if (fh != )
-	
-	
-	//my_curl_photo_upload("test_123.jpg","hello world");
-	
-	
-	
-	
-	//return 0;
-	ypfs_data = malloc(sizeof(struct ypfs_session));
-	
-	if (ypfs_data == NULL) {
+	if (apfs_data == NULL) {
 		fprintf(stderr, "***********malloc error\n");
 		return -1;
 	}
 	
 	umask(0);
 	
-	ypfs_data->mount_point = realpath(argv[1], NULL);
-	//printf("Your mount point: %s\n", ypfs_data->mount_point);
+	apfs_data->mount_point = realpath(argv[1], NULL);
 	printf("Welcome %s!\n", username);
 	
-	strcpy(ypfs_data->username ,username);
+	strcpy(apfs_data->username ,username);
 	
-	root_node = new_node("/", YP_DIR);
-	//create_node_from_path("/ypfs", YP_DIR, NULL);
+	root_node = new_node("/", AP_DIR);
 	
 	fprintf(stderr, "***********about to call fuse_main\n");
-    fuse_ret = fuse_main(argc, argv, &ypfs_oper, ypfs_data);
+    fuse_ret = fuse_main(argc, argv, &apfs_oper, apfs_data);
 	fprintf(stderr, "***********fuse_main: %d\n", fuse_ret);
 	
 	return fuse_ret;
