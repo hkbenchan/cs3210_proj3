@@ -1158,6 +1158,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		if (ed) {
 			fprintf(stderr, "***********EXIF data found!\n");
 			entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
+			
 			fprintf(stderr, "***********EXIF get entry\n");
 			exif_entry_get_value(entry, buf, sizeof(buf));
 			fprintf(stderr, "***********EXIF get value\n");
@@ -1571,7 +1572,9 @@ static size_t download_callback(void *ptr, size_t size, size_t nmemb, FILE *stre
   	fprintf(stderr, "Server Return: %s\n", ptr);
  	*/
 
-	size_t written = fwrite(ptr, size, nmemb, stream);
+	size_t written;
+	fprintf(stderr, "***********download_callback calls\n");
+	written = fwrite(ptr, size, nmemb, stream);
 	return written;
 
 	//return retcode;
