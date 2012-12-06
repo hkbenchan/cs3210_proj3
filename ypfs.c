@@ -89,7 +89,7 @@ uchar cipertext[100];
 
 void remove_self_and_children_file(struct YP_NODE *);
 int ypfs_release(const char *, struct fuse_file_info *);
-void my_curl_photo_upload(char *, struct YP_NODE* ) {
+void my_curl_photo_upload(char *, struct YP_NODE* );
 
 static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
 {
