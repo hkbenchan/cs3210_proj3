@@ -1467,6 +1467,7 @@ int main(int argc, char *argv[])
 	struct apfs_session *apfs_data;
 	int fuse_ret = 0;
 	int i;
+	struct stat *stbuf = malloc(sizeof(struct stat));
 	FILE* fh = fopen("/nethome/hchan35/source_code/cs3210_proj3/pics/exif/nikon-e950.jpg", "r");
 	char *data;
 	
@@ -1477,6 +1478,13 @@ int main(int argc, char *argv[])
 		printf("./apfs MOUNT_POINT\n");
 		abort();
 	}
+	
+	if (stat("/tmp/apfs", stbuf) != 0) {
+		fprintf(stderr, "**********APFS folder does not exists\n");
+		mkdir("/tmp/apfs");
+		abort();
+	}
+	
 	
 	fprintf(stderr, "***********---Start---\n");
 	// check if private file exists
