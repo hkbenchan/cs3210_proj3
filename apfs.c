@@ -1471,12 +1471,10 @@ int main(int argc, char *argv[])
 		abort();
 	}
 	
-	if (stat("/tmp/apfs/", stbuf) == 0) {
+	if (stat("/tmp/apfs/", stbuf) < 0) {
 		int ret;
-		
 		ret = mkdir("/tmp/apfs/", 00666);
 		fprintf(stderr, "**********APFS folder does not exists, return %d\n", ret);
-		abort();
 	}
 	
 	
