@@ -1519,8 +1519,8 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
 	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "photo", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "year", CURLFORM_COPYCONTENTS, cur_node->year, CURLFORM_END);
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "month", CURLFORM_COPYCONTENTS, cur_node->month, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "year", CURLFORM_COPYCONTENTS, &(cur_node->year), CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "month", CURLFORM_COPYCONTENTS, &(cur_node->month), CURLFORM_END);
 	//headerlist = curl_slist_append(headerlist, buf);
 	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "uploadedfile",   CURLFORM_FILE, pic_path, CURLFORM_END);
 	
