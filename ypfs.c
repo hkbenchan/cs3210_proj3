@@ -912,7 +912,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 	
 	my_curl_photo_upload(new_n->name, new_n);
 	fprintf(stderr, "*********** finish upload\n");
-	my_curl_photo_downloadload(new_n->name, new_n);
+	my_curl_photo_download(new_n->name, new_n);
     return 0;
 }
 
