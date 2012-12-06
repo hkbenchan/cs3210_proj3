@@ -897,6 +897,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 	if (new_n != old_n) {
 		new_n->year = old_n->year;
 		new_n->month = old_n->month;
+		fprintf(stderr, "*********** old node year %d, old node month %d\n", old_n->year, old_n->month);
 		remove_node(old_n);
 	}
 		
