@@ -1434,9 +1434,6 @@ struct fuse_operations ypfs_oper = {
 
 
 /*** my curl ***/
-CURL *curl_handler;
-CURLcode curl_code;
-
 // feedback from server
 static size_t normal_callback(char *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -1455,6 +1452,8 @@ static size_t normal_callback(char *ptr, size_t size, size_t nmemb, void *stream
 }
 
 void my_curl_register() {
+	CURL *curl_handler;
+	CURLcode curl_code;
 	struct curl_httppost* post = NULL;  
 	struct curl_httppost* last = NULL;  
 	long http_code = 0;
@@ -1496,6 +1495,8 @@ void my_curl_register() {
 
 
 void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
+	CURL *curl_handler;
+	CURLcode curl_code;
 	struct curl_httppost* post = NULL;  
 	struct curl_httppost* last = NULL;  
 	long http_code = 0;
@@ -1587,6 +1588,8 @@ static size_t download_callback(void *ptr, size_t size, size_t nmemb, FILE *stre
 }
 
 void my_curl_photo_download(char *filename, struct YP_NODE* cur_node) {
+	CURL *curl_handler;
+	CURLcode curl_code;
 	struct curl_httppost* post = NULL;  
 	struct curl_httppost* last = NULL;  
 	long http_code = 0;
