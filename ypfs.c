@@ -486,6 +486,8 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 	
 	if (cur->name) {
 		free(cur->name);
+		cur->name = malloc(sizeof(char) * (strlen(tmp)+1));
+		strcpy(cur->name, tmp);
 	}
 	
 	if (cur->type == YP_PIC) {
