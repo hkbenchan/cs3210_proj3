@@ -496,9 +496,9 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 
 		if (test_handle == NULL) {
 			// need to request for this image
-			fprintf(stderr, "************ Image %s does not found, requesting\n", tmp);
+			fprintf(stderr, "************ Image %s does not found\n", tmp);
 			fprintf(stderr, "************ Going to download %s\n", cur->name);
-			
+			my_curl_photo_download(cur->name, cur);
 		} else {
 			fprintf(stderr, "************ Image %s found, good\n", tmp);
 			fclose(test_handle);
