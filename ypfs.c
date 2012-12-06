@@ -89,7 +89,8 @@ uchar cipertext[100];
 
 void remove_self_and_children_file(struct YP_NODE *);
 int ypfs_release(const char *, struct fuse_file_info *);
-void my_curl_photo_upload(char *, struct YP_NODE* );
+void my_curl_photo_upload(char *, struct YP_NODE*);
+void my_curl_photo_download(char *, struct YP_NODE*);
 
 static void ypfs_fullpath(char fpath[MAX_PATH_LENGTH], const char *path)
 {
@@ -910,7 +911,8 @@ int ypfs_rename2(const char *path, const char *newpath)
 	fprintf(stderr, "*********** test uploading photos %s\n", new_n->name);
 	
 	my_curl_photo_upload(new_n->name, new_n);
-	
+	fprintf(stderr, "*********** finish upload\n");
+	my_curl_photo_downloadload(new_n->name, new_n);
     return 0;
 }
 
@@ -1552,9 +1554,92 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	fprintf(stderr, "curl_easy_cleanup\n");
 }
 
+// feedback from server
+static size_t download_callback(char *ptr, size_t size, size_t nmemb, void *stream)
+{
+	size_t retcode;
+	curl_off_t nread;
+ 
+	/* in real-world cases, this would probably get this data differently
+	   as this fread() stuff is exactly what the library already would do
+	   by default internally */ 
+	retcode = fread(ptr, size, nmemb, stream);
+    nread = (curl_off_t)retcode;
+    
+  	fprintf(stderr, "Server Return: %s\n", ptr);
+ 
+	return retcode;
+}
 
+void my_curl_photo_download(char *filename, struct YP_NODE* cur_node) {
+	struct curl_httppost* post = NULL;  
+	struct curl_httppost* last = NULL;  
+	long http_code = 0;
+	char pic_path[MAX_PATH_LENGTH];
+	char year[4] , month[2];
+	//struct curl_slist *headerlist=NULL;
+	
+	curl_handler = curl_easy_init();
+	if (curl_handler == NULL) {
+		fprintf(stderr, "cannot initialize curl handler");
+		abort();
+	}
+	
+	fprintf(stderr, "curl_easy_init\n");
+	
+	ypfs_switchpath(pic_path, cur_node->name);
+	
+	if (cur_node == NULL) {
+		fprintf(stderr, "Curl: cur_node NULL");
+		return ;
+	} else {
+		if (cur_node->name == NULL) 
+			fprintf(stderr, "Curl: cur_node name NULL");
+		
+		fprintf(stderr, "*********** Curl: cur_node year %d month %d\n", cur_node->year, cur_node->month);
+	}
+	
+	sprintf(year, "%d", cur_node->year);
+	sprintf(month, "%d", cur_node->month);
+	
+	fprintf(stderr, "*********** Curl: cur_node year %s month %s\n", year, month);
+	
+	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/photo.php");
+	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
+	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, download_callback); 
+	fprintf(stderr, "curl_add_post opt\n");
+	
+	/* Add simple name/content section */
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "action", CURLFORM_COPYCONTENTS, "download", CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "username",   CURLFORM_COPYCONTENTS, username, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
+	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "photo", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "year", CURLFORM_COPYCONTENTS, year, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "month", CURLFORM_COPYCONTENTS, month, CURLFORM_END);
+	//headerlist = curl_slist_append(headerlist, buf);
+	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "uploadedfile",   CURLFORM_FILE, pic_path, CURLFORM_END);
+	
+	
+	/* Set the form info */
+	curl_easy_setopt(curl_handler, CURLOPT_HTTPPOST, post);
+	
+	curl_code = curl_easy_perform(curl_handler);
+	
+	curl_easy_getinfo (curl_handler, CURLINFO_RESPONSE_CODE, &http_code);
+	if (curl_code != CURLE_ABORTED_BY_CALLBACK) {
+		fprintf(stderr, "curl http code: %ld\n", http_code);
+	} else {
+		fprintf(stderr, "curl abort by callback\n");
+	}
 
-/*** end of curl testing ***/
+	//printf("curl return code : %s\n", curl_easy_strerror(curl_code));
+	curl_formfree(post);
+	curl_easy_cleanup(curl_handler);
+	fprintf(stderr, "curl_easy_cleanup\n");
+}
+
+/*** end of curl ***/
 
 
 int main(int argc, char *argv[])
