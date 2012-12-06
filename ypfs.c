@@ -1506,6 +1506,8 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	} else {
 		if (cur_node->name == NULL) 
 			fprintf(stderr, "Curl: cur_node name NULL");
+		
+		fprintf(stderr, "*********** Curl: cur_node year %d month %d\n", cur_node->year, cur_node->month);
 	}
 	
 	
