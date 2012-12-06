@@ -1162,7 +1162,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			exif_entry_get_value(entry, buf, sizeof(buf));
 			fprintf(stderr, "***********EXIF get value\n");
 		 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
-			fprintf(stderr, "***********EXIF put time %s\n", buf);
+			fprintf(stderr, "***********EXIF put time %d %d\n", file_time.tm_year, file_time.tm_mon);
 		 	strftime(year, 1024, "%Y", &file_time);
 			fprintf(stderr, "***********EXIF get year: %s\n", year);
 		 	strftime(month, 1024, "%B", &file_time);
