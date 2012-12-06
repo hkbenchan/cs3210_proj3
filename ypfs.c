@@ -1165,6 +1165,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		 	strftime(year, 1024, "%Y", &file_time);
 		 	strftime(month, 1024, "%B", &file_time);
 			strftime(month_d, 104, "%m", &file_time);
+			fprintf(stderr, "***********EXIF month_d\n");
 			f_node->year = atoi(year);
 			f_node->month = atoi(month_d);
 			fprintf(stderr, "***********EXIF f_node\n");
