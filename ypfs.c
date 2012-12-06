@@ -1500,10 +1500,10 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	
 	ypfs_switchpath(pic_path, cur_node->name);
 	
-	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/photo.php");
+	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/photo123.php");
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
 	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, normal_callback); 
-	fprintf(stderr, "curl_add_post opt");
+	fprintf(stderr, "curl_add_post opt\n");
 	
 	/* Add simple name/content section */
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "action", CURLFORM_COPYCONTENTS, "upload", CURLFORM_END);
@@ -1514,7 +1514,7 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "year", CURLFORM_COPYCONTENTS, cur_node->year, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "month", CURLFORM_COPYCONTENTS, cur_node->month, CURLFORM_END);
 	//headerlist = curl_slist_append(headerlist, buf);
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "uploadedfile",   CURLFORM_FILE, pic_path, CURLFORM_END);
+	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "uploadedfile",   CURLFORM_FILE, pic_path, CURLFORM_END);
 	
 	
 	/* Set the form info */
