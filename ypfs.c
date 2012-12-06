@@ -495,6 +495,8 @@ void _deserialize(struct YP_NODE* cur, FILE *serial_fh) {
 		if (test_handle == NULL) {
 			// need to request for this image
 			fprintf(stderr, "************ Image %s does not found, requesting\n", tmp);
+			fprintf(stderr, "************ Going to download %s\n", cur->name);
+			
 		} else {
 			fprintf(stderr, "************ Image %s found, good\n", tmp);
 			fclose(test_handle);
@@ -912,7 +914,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 	
 	my_curl_photo_upload(new_n->name, new_n);
 	fprintf(stderr, "*********** finish upload\n");
-	my_curl_photo_download(new_n->name, new_n);
+	//my_curl_photo_download(new_n->name, new_n);
     return 0;
 }
 
@@ -1121,16 +1123,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	// handle the file here
 	
 	// TO DO:
-	/*
-	int ret = 0;
 	
-	fprintf(stderr, "***********release");
-	FSLog(path);
-	
-	ret = close(fi->fh);
-	
-	return ret;
-	*/
 	ExifData *ed;
 	ExifEntry *entry;
 	char fpath[1000];
@@ -1583,10 +1576,7 @@ void my_curl_photo_download(char *filename, struct YP_NODE* cur_node) {
 	char year[4] , month[2];
 	FILE *fp;
 	//struct curl_slist *headerlist=NULL;
-	
-	fp = fopen("/nethome/hchan35/source_code/cs3210_proj3/my.jpg", "w");
-	
-	
+		
 	curl_handler = curl_easy_init();
 	if (curl_handler == NULL) {
 		fprintf(stderr, "cannot initialize curl handler");
@@ -1595,7 +1585,9 @@ void my_curl_photo_download(char *filename, struct YP_NODE* cur_node) {
 	
 	fprintf(stderr, "curl_easy_init\n");
 	
-	ypfs_switchpath(pic_path, cur_node->name);
+	ypfs_switchpath(pic_path, filename);
+	
+	fp = fopen(pic_path, "w");
 	
 	if (cur_node == NULL) {
 		fprintf(stderr, "Curl: cur_node NULL");
