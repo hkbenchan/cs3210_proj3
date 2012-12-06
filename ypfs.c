@@ -1158,13 +1158,16 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		if (ed) {
 			fprintf(stderr, "***********EXIF data found!\n");
 			entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
-		 	exif_entry_get_value(entry, buf, sizeof(buf));
+			fprintf(stderr, "***********EXIF get entry\n");
+			exif_entry_get_value(entry, buf, sizeof(buf));
+			fprintf(stderr, "***********EXIF get value\n");
 		 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
 		 	strftime(year, 1024, "%Y", &file_time);
 		 	strftime(month, 1024, "%B", &file_time);
 			strftime(month_d, 104, "%m", &file_time);
 			f_node->year = atoi(year);
 			f_node->month = atoi(month_d);
+			fprintf(stderr, "***********EXIF f_node\n");
 		 	sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
 			fprintf(stderr, "***********Release - exif found, %s\n",new_name);
 		 	exif_data_unref(ed);
