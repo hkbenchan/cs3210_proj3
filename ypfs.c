@@ -906,7 +906,7 @@ int ypfs_rename2(const char *path, const char *newpath)
 	fprintf(stderr, "***********end of rename2\n");
 	
 	// update the photos to the server
-	fprintf(stderr, "*********** test uploading photos\n");
+	fprintf(stderr, "*********** test uploading photos %s\n", new_n->name);
 	
 	my_curl_photo_upload(new_n->name, new_n);
 	
