@@ -1172,7 +1172,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 			strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
 			strftime(year, 1024, "%Y", &file_time);
 			strftime(month, 1024, "%B", &file_time);
-			strftime(month_d, 104, "%m", &file_time);
+			strftime(month_d, 1024, "%m", &file_time);
 			f_node->year = atoi(year);
 			f_node->month = atoi(month_d);
 			sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
@@ -1202,7 +1202,7 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 				pic_time = localtime(&sb.st_ctime);
 				strftime(year, 1024, "%Y", pic_time);
 				strftime(month, 1024, "%B", pic_time);
-				strftime(month_d, 104, "%m", &file_time);
+				strftime(month_d, 1024, "%m", pic_time);
 				f_node->year = atoi(year);
 				f_node->month = atoi(month_d);
 				sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
