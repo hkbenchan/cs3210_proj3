@@ -1503,6 +1503,7 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/photo.php");
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
 	curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, normal_callback); 
+	fprintf(stderr, "curl_add_post opt");
 	
 	/* Add simple name/content section */
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "action", CURLFORM_COPYCONTENTS, "upload", CURLFORM_END);
