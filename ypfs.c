@@ -1238,8 +1238,9 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 		fprintf(stderr, "***********before rename2 %s %s %s\n", path, fpath, new_name);
 		if (strcmp(path,new_name) == 0){
 			fprintf(stderr, "************** Path and new_name are the same\n");
-		}
+		} else {
 			ypfs_rename2(path, new_name);
+		}
 
 	}
 	fprintf(stderr, "***********End of release\n");
