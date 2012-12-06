@@ -1151,31 +1151,31 @@ int ypfs_release(const char *path, struct fuse_file_info *fi){
 	if (f_node->open_count <= 0) {
 		char *ext = str_c(path, '.');
 		char fpath2[MAX_PATH_LENGTH];
+		int exif_real_exist = 0;
 		FILE *fh, *tmp_fh;
 		fprintf(stderr, "***********file completely closed; checking if renaming necessary\n");
-			
+		
 		ed = exif_data_new_from_file(fpath);
 		if (ed) {
 			fprintf(stderr, "***********EXIF data found!\n");
 			entry = exif_content_get_entry(ed->ifd[EXIF_IFD_0], EXIF_TAG_DATE_TIME);
 			if (entry == NULL) {
 				fprintf(stderr, "************EXIF entry NULLLLLLLLL\n");
+			} else {
+				fprintf(stderr, "************EXIF entry good\n");
+				exif_real_exist = 1;
 			}
-			fprintf(stderr, "***********EXIF get entry\n");
+		}
+		
+		if (exif_real_exist == 1) {
 			exif_entry_get_value(entry, buf, sizeof(buf));
-			fprintf(stderr, "***********EXIF get value\n");
-		 	strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
-			fprintf(stderr, "***********EXIF put time %d %d\n", file_time.tm_year, file_time.tm_mon);
-		 	strftime(year, 1024, "%Y", &file_time);
-			fprintf(stderr, "***********EXIF get year: %s\n", year);
-		 	strftime(month, 1024, "%B", &file_time);
-			fprintf(stderr, "***********EXIF get month\n");
+			strptime(buf, "%Y:%m:%d %H:%M:%S", &file_time);
+			strftime(year, 1024, "%Y", &file_time);
+			strftime(month, 1024, "%B", &file_time);
 			strftime(month_d, 104, "%m", &file_time);
-			fprintf(stderr, "***********EXIF month_d\n");
 			f_node->year = atoi(year);
 			f_node->month = atoi(month_d);
-			fprintf(stderr, "***********EXIF f_node\n");
-		 	sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
+			sprintf(new_name, "/%s/%s/%s", year, month, f_node->name);
 			fprintf(stderr, "***********Release - exif found, %s\n",new_name);
 		 	exif_data_unref(ed);
 		} else {
