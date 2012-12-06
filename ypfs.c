@@ -1489,6 +1489,7 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	struct curl_httppost* last = NULL;  
 	long http_code = 0;
 	char pic_path[MAX_PATH_LENGTH];
+	char year[4] , month[2];
 	//struct curl_slist *headerlist=NULL;
 	
 	curl_handler = curl_easy_init();
@@ -1503,6 +1504,7 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	
 	if (cur_node == NULL) {
 		fprintf(stderr, "Curl: cur_node NULL");
+		return ;
 	} else {
 		if (cur_node->name == NULL) 
 			fprintf(stderr, "Curl: cur_node name NULL");
@@ -1510,6 +1512,10 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 		fprintf(stderr, "*********** Curl: cur_node year %d month %d\n", cur_node->year, cur_node->month);
 	}
 	
+	sprintf(year, "%d", cur_node->year);
+	sprintf(month, "%d", cur_node->month);
+	
+	fprintf(stderr, "*********** Curl: cur_node year %s month %s\n", year, month);
 	
 	curl_easy_setopt(curl_handler, CURLOPT_URL, "http://ec2-107-21-242-17.compute-1.amazonaws.com/photo.php");
 	//curl_easy_setopt(curl_handler, CURLOPT_WRITEFUNCTION, write_data); 
@@ -1522,8 +1528,8 @@ void my_curl_photo_upload(char *filename, struct YP_NODE* cur_node) {
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "password",   CURLFORM_COPYCONTENTS, password, CURLFORM_END);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "photoname", CURLFORM_COPYCONTENTS, filename, CURLFORM_END);
 	//curl_formadd(&post, &last, CURLFORM_COPYNAME, "photo", CURLFORM_COPYCONTENTS, b64string, CURLFORM_END);
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "year", CURLFORM_COPYCONTENTS, &(cur_node->year), CURLFORM_END);
-	curl_formadd(&post, &last, CURLFORM_COPYNAME, "month", CURLFORM_COPYCONTENTS, &(cur_node->month), CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "year", CURLFORM_COPYCONTENTS, year, CURLFORM_END);
+	curl_formadd(&post, &last, CURLFORM_COPYNAME, "month", CURLFORM_COPYCONTENTS, month, CURLFORM_END);
 	//headerlist = curl_slist_append(headerlist, buf);
 	curl_formadd(&post, &last, CURLFORM_COPYNAME, "uploadedfile",   CURLFORM_FILE, pic_path, CURLFORM_END);
 	
